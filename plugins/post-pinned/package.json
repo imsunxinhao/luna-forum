@@ -1,0 +1,11 @@
+{
+  "name": "luna-forum-plugin-post-pinned",
+  "version": "0.0.0",
+  "description": "Luna Forum 的帖子置顶插件",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "LGPL-3.0-or-later"
+}

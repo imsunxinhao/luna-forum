@@ -1,0 +1,28 @@
+{
+  "mongodb": {
+    "uri": "[请填写您的数据库链接地址，如 mongodb://localhost:27017]",
+    "dbName": "[请填写您的数据库名称]"
+  },
+  "jwt_secret": "your-super-secret-key-here-please-change-it-thanks",
+  "plugins": [
+    {
+      "name": "post",
+      "main": "./plugins/post/index.ts",
+      "deps": []
+    },
+    {
+      "name": "post-pinned",
+      "main": "./plugins/post-pinned/index.ts",
+      "deps": [
+        "post"
+      ]
+    },
+    {
+      "name": "tag",
+      "main": "./plugins/tag/index.ts",
+      "deps": [
+        "post"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "luna-forum-backend",
+  "version": "0.0.0",
+  "description": "Luna Forum",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch index.ts",
+    "start": "node dist/index.js"
+  },
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^26.1.0",
+    "@types/winston": "^2.4.4",
+    "bcrypt": "^6.0.0",
+    "fastify": "^5.9.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.4.0",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3"
+  }
+}

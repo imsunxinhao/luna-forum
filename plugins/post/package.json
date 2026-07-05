@@ -1,0 +1,11 @@
+{
+  "name": "luna-forum-plugin-post",
+  "version": "0.0.0",
+  "description": "Luna forum 的帖子插件",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "AGPL-3.0-or-later"
+}

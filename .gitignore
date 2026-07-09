@@ -6,3 +6,4 @@ config.json
 Thumbs.db
 yarn.lock
 package-lock.json
+/generated/prisma

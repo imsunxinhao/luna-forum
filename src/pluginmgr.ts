@@ -10,11 +10,9 @@ class PluginManager {
   private commands: Map<string, Function> = new Map()
   private kernelAPI: KernelAPI | null = null
   private server: any = null
-
   setServer(server: any): void {
     this.server = server
   }
-
   initKernelAPI(): KernelAPI {
     this.kernelAPI = {
       getDB,
@@ -32,7 +30,6 @@ class PluginManager {
     }
     return this.kernelAPI
   }
-
   async register(plugin: Plugin): Promise<void> {
     if (this.plugins.has(plugin.name)) {
       throw new Error(`Plugin ${plugin.name} already registered`)
@@ -66,22 +63,18 @@ class PluginManager {
     if (!plugin) throw new Error(`Plugin ${name} not found`)
     await plugin.deactivate()
   }
-
   async executeCommand(name: string, ...args: any[]): Promise<any> {
     const cmd = this.commands.get(name)
     if (!cmd) throw new Error(`Command ${name} not found`)
     return cmd(...args)
   }
-
   async loadPlugin(manifest: PluginManifest): Promise<void> {
     const mod = await import('../' + manifest.main)
     const plugin: Plugin = mod.default || mod
     await this.register(plugin)
   }
-
   getPlugin(name: string): Plugin | undefined {
     return this.plugins.get(name)
   }
 }
-
 export const pluginManager = new PluginManager()

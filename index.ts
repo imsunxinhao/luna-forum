@@ -21,10 +21,12 @@ async function main() {
 }
 main().catch(console.error)
 process.on('SIGINT', async () => {
+  console.log('收到关闭信号，正在优雅关闭...')
   await kernel.stop()
   process.exit(0)
 })
 process.on('SIGTERM', async () => {
+  console.log('收到关闭信号，正在优雅关闭...')
   await kernel.stop()
   process.exit(0)
 })

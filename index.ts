@@ -2,6 +2,7 @@ import { Kernel } from './src/kernel'
 import { pluginManager } from './src/pluginmgr'
 import { getPlugins } from './src/config'
 const kernel = new Kernel()
+
 async function main() {
   const config = await kernel.boot('./config.json')
   pluginManager.initKernelAPI()
@@ -19,17 +20,21 @@ async function main() {
     await kernel.start()
   }
 }
+
 main().catch(console.error)
+
 process.on('SIGINT', async () => {
   console.log('收到关闭信号，正在优雅关闭...')
   await kernel.stop()
   process.exit(0)
 })
+
 process.on('SIGTERM', async () => {
   console.log('收到关闭信号，正在优雅关闭...')
   await kernel.stop()
   process.exit(0)
 })
+
 export { Kernel }
 export type { Plugin } from './src/types'
 export { pluginManager } from './src/pluginmgr'

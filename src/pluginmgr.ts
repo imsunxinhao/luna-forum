@@ -4,16 +4,19 @@ import { getDB } from './db.js'
 import { getDBConfigValue, setDBConfig } from './config.js'
 import { privManager } from './privmgr.js'
 import { getUserIdFromRequest } from './auth.js'
+import { FastifyInstance } from 'fastify'
 
 class PluginManager {
   private plugins: Map<string, Plugin> = new Map()
   private commands: Map<string, Function> = new Map()
-  private kernelAPI: KernelAPI | null = null
-  private server: any = null
-  setServer(server: any): void {
+  private kernelAPI!: KernelAPI
+  private server!: FastifyInstance
+
+  setServer(server: FastifyInstance) {
     this.server = server
   }
-  initKernelAPI(): KernelAPI {
+
+  initKernelAPI() {
     this.kernelAPI = {
       getDB,
       getServer: () => this.server,
@@ -30,7 +33,8 @@ class PluginManager {
     }
     return this.kernelAPI
   }
-  async register(plugin: Plugin): Promise<void> {
+
+  async register(plugin: Plugin) {
     if (this.plugins.has(plugin.name)) {
       throw new Error(`Plugin ${plugin.name} already registered`)
     }
@@ -42,37 +46,49 @@ class PluginManager {
     }
 
     const ctx: PluginContext = {
-      kernel: this.kernelAPI!,
+      kernel: this.kernelAPI,
       registerHook: (hook, handler) => hookManager.register(hook, handler),
       registerCommand: (name, fn) => this.commands.set(name, fn),
       registerPriv: (name, bitExpression, isDefault) => privManager.register(name, bitExpression, isDefault)
     }
 
     await plugin.init(ctx)
+
     this.plugins.set(plugin.name, plugin)
   }
 
-  async activate(name: string): Promise<void> {
+  async activate(name: string) {
     const plugin = this.plugins.get(name)
+
     if (!plugin) throw new Error(`Plugin ${name} not found`)
+
     await plugin.activate()
   }
 
-  async deactivate(name: string): Promise<void> {
+  async deactivate(name: string) {
     const plugin = this.plugins.get(name)
+
     if (!plugin) throw new Error(`Plugin ${name} not found`)
+
     await plugin.deactivate()
   }
-  async executeCommand(name: string, ...args: any[]): Promise<any> {
+
+  async executeCommand(name: string, ...args: unknown[]) {
     const cmd = this.commands.get(name)
+
     if (!cmd) throw new Error(`Command ${name} not found`)
+
     return cmd(...args)
   }
-  async loadPlugin(manifest: PluginManifest): Promise<void> {
+
+  async loadPlugin(manifest: PluginManifest) {
     const mod = await import('../' + manifest.main)
+
     const plugin: Plugin = mod.default || mod
+
     await this.register(plugin)
   }
+
   getPlugin(name: string): Plugin | undefined {
     return this.plugins.get(name)
   }

@@ -13,9 +13,10 @@
     "declaration": true
   },
   "include": [
-    "*.ts",
+    "index.ts",
     "src/**/*.ts",
-    "plugins/**/*.ts"
+    "plugins/**/*.ts",
+    "global.d.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

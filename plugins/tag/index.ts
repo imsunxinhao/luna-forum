@@ -18,7 +18,7 @@ const tagPlugin: Plugin = {
     ctx.registerPriv('PRIV_TAG_DELETE', String(PRIV_TAG_DELETE))
     ctx.registerPriv('PRIV_TAG_MOD', String(PRIV_TAG_MOD))
 
-    ctx.registerHook('post:afterCreate', async (post: any) => {
+    ctx.registerHook('post:afterCreate', async (post) => {
       if (post.tagId) {
         const db = ctx.kernel.getDB()
         await db.collection('tags').updateOne(
@@ -28,7 +28,7 @@ const tagPlugin: Plugin = {
       }
     })
 
-    ctx.registerHook('post:afterDelete', async (post: any) => {
+    ctx.registerHook('post:afterDelete', async (post) => {
       if (post && post.tagId) {
         const db = ctx.kernel.getDB()
         await db.collection('tags').updateOne(

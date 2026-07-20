@@ -1,17 +1,18 @@
 import { connect, disconnect } from './db.js'
 import { pluginManager } from './pluginmgr.js'
 import { hookManager } from './hookmgr.js'
-import { Plugin, KernelAPI } from './types.js'
 import { loadConfig, loadDBConfig } from './config.js'
 import { privManager } from './privmgr.js'
 import { registerAuthPrivs, initGuestPriv, setupAuthRoutes, setJWTSecret } from './auth.js'
-import Fastify from 'fastify'
+import Fastify, { FastifyInstance } from 'fastify'
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 
 export class Kernel {
-  private server: any
+  private server!: FastifyInstance
+
   private started: boolean = false
 
-  async boot(configPath?: string): Promise<any> {
+  async boot(configPath?: string) {
     const config = await loadConfig(configPath)
 
     setJWTSecret(config.jwt_secret || 'default-secret')
@@ -21,11 +22,12 @@ export class Kernel {
     await privManager.initGuestUser()
 
     registerAuthPrivs()
+
     await initGuestPriv()
 
     await loadDBConfig()
 
-    this.server = Fastify({ logger: true })
+    this.server = Fastify({ logger: true }).withTypeProvider<TypeBoxTypeProvider>()
 
     this.server.get('/api/v1/health', async () => {
       return { status: 'ok', plugins: Array.from(pluginManager['plugins'].keys()) }
@@ -40,7 +42,7 @@ export class Kernel {
     return config
   }
 
-  async start(port?: number): Promise<void> {
+  async start(port?: number) {
     if (!this.started) throw new Error('Kernel not booted')
 
     const dbPort = port || await (async () => {
@@ -60,7 +62,7 @@ export class Kernel {
     await hookManager.call('kernel:afterStart')
   }
 
-  async stop(): Promise<void> {
+  async stop() {
     await hookManager.call('kernel:beforeStop')
 
     if (this.server) {
@@ -72,7 +74,7 @@ export class Kernel {
     this.started = false
   }
 
-  getServer(): any {
+  getServer() {
     return this.server
   }
 }

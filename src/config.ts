@@ -3,7 +3,7 @@ import { resolve } from 'path'
 import { getDB } from './db.js'
 import { PluginConfig } from './types.js'
 
-interface AppConfig {
+export interface AppConfig {
   mongodb: {
     uri: string
     dbName: string
@@ -12,11 +12,10 @@ interface AppConfig {
   plugins: PluginConfig[]
 }
 
-interface DBConfig {
-  [key: string]: any
-}
+export interface DBConfig extends Record<string, unknown> {}
 
-let appConfig: AppConfig | null = null
+let appConfig: AppConfig
+
 let dbConfig: DBConfig = {}
 
 export async function loadConfig(configPath: string = './config.json'): Promise<AppConfig> {
@@ -40,7 +39,7 @@ export async function loadDBConfig(): Promise<DBConfig> {
   const db = getDB()
   const configs = await db.collection('configs').find().toArray()
   
-  configs.forEach((config: any) => {
+  configs.forEach((config) => {
     dbConfig[config.key] = config.value
   })
 
@@ -70,16 +69,20 @@ export function getDBConfig(): DBConfig {
   return dbConfig
 }
 
-export function getDBConfigValue(key: string, defaultValue?: any): any {
-  return dbConfig[key] ?? defaultValue
+export function getDBConfigValue<T>(key: string, defaultValue : T) {
+  return (dbConfig[key] as T) ?? defaultValue
 }
 
-export async function setDBConfig(key: string, value: any): Promise<void> {
+export async function setDBConfig<T>(key: string, value: T) {
   const db = getDB()
-  await db.collection('configs').updateOne(
-    { key },
-    { $set: { key, value, updatedAt: new Date() } },
-    { upsert: true }
-  )
+
+  await db
+    .collection('configs')
+    .updateOne(
+      { key },
+      { $set: { key, value, updatedAt: new Date() } },
+      { upsert: true }
+    )
+
   dbConfig[key] = value
 }

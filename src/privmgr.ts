@@ -112,7 +112,7 @@ class PrivManager {
     return String(user.priv)
   }
 
-  async setUserPriv(userId: number, priv: string): Promise<void> {
+  async setUserPriv(userId: number, priv: string) {
     const db = getDB()
     await db.collection('users').updateOne(
       { uid: userId },
@@ -120,7 +120,7 @@ class PrivManager {
     )
   }
 
-  async addUserPriv(userId: number, privBit: number): Promise<void> {
+  async addUserPriv(userId: number, privBit: number) {
     const db = getDB()
     const user = await db.collection('users').findOne({ uid: userId })
     if (!user) throw new Error('User not found')
@@ -137,7 +137,7 @@ class PrivManager {
     )
   }
 
-  async removeUserPriv(userId: number, privBit: number): Promise<void> {
+  async removeUserPriv(userId: number, privBit: number) {
     const db = getDB()
     const user = await db.collection('users').findOne({ uid: userId })
     if (!user) throw new Error('User not found')
@@ -154,7 +154,7 @@ class PrivManager {
     )
   }
 
-  async banUser(userId: number): Promise<void> {
+  async banUser(userId: number) {
     const db = getDB()
     if (userId === 0) throw new Error('Cannot ban guest user')
     
@@ -164,7 +164,7 @@ class PrivManager {
     )
   }
 
-  async unbanUser(userId: number): Promise<void> {
+  async unbanUser(userId: number) {
     const db = getDB()
     await db.collection('users').updateOne(
       { uid: userId },
@@ -178,7 +178,7 @@ class PrivManager {
     return user ? user.banned === true : false
   }
 
-  async initGuestUser(): Promise<void> {
+  async initGuestUser() {
     const db = getDB()
     
     const guestUser = await db.collection('users').findOne({ uid: 0 })

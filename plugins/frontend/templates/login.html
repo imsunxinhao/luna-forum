@@ -3,43 +3,36 @@
 {% block page_content %}
 <div class="lf-card-center-wrapper">
     <div class="lf-card lf-card-center">
-        {% if error %}
-            <div class="lf-card-header">
-                <div class="lf-card-title"><iconify-icon icon="fluent:error-circle-48-filled"></iconify-icon>Oops!</div>
-                <div class="lf-card-subtitle">出错了</div>
-            </div>
-            <div class="lf-card-content">
-                <p><strong>错误：{{ error }}。</strong></p>
-                <p><strong>解决方案：</strong>请刷新该页面并重试。</p>
-            </div>
-        {% else %}
-            {% if not user %}
-            <div class="lf-card-header">
-                <div class="lf-card-title">登录到 {{ site.name }}</div>
-                <div class="lf-card-subtitle">什么？没有帐户？<fluent-link href="/register">注册一个！</fluent-link></div>
-            </div>
-            <div class="lf-card-content">
-                <form method="POST" action="/api/v1/login" class="lf-form">
-                    <fluent-text-input type="text" name="username" class="lf-card-input" autofocus required>用户名</fluent-text-input>
-                    <fluent-text-input type="password" name="password" class="lf-card-input" required>密码</fluent-text-input>
-                    <fluent-field label-position="after">
-                        <label slot="label" class="lf-agreement-link">我同意<fluent-link href="#">用户协议</fluent-link>和<fluent-link href="#">隐私保护协议</fluent-link></label>
-                        <fluent-checkbox slot="input" aria-required="true" onchange="document.getElementById('login-btn').disabled = !this.checked"></fluent-checkbox>
-                    </fluent-field>
-                    <fluent-button appearance="primary" type="submit" id="login-btn" disabled>登录</fluent-button>
-                </form>
-            </div>
-            {% else %}
-            <div class="lf-card-header">
-                <div class="lf-card-title"><iconify-icon icon="fluent:error-circle-48-filled"></iconify-icon>Oops!</div>
-                <div class="lf-card-subtitle">出错了</div>
-            </div>
-            <div class="lf-card-content">
-                <p><strong>错误原因：</strong>用户已登录</p>
-                <p><strong>解决方案：</strong>您已经登录到 {{ site.name }} 了，若需要切换账户，请先退出当前账户。</p>
-            </div>
-            {% endif %}
-        {% endif %}
+        <div class="lf-card-header">
+            <div class="lf-card-title">登录到 {{ site.name }}</div>
+            <div class="lf-card-subtitle">什么？没有帐户？<fluent-link href="/register">注册一个！</fluent-link></div>
+        </div>
+        <div class="lf-card-content">
+            <form method="POST" action="/api/v1/login" class="lf-form">
+                {% if error %}
+                <fluent-message-bar intent="error">
+                    <span slot="icon" style="color: #B10E1C">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+                            <path fill="currentColor"
+                                d="M10 2a8 8 0 1 1 0 16a8 8 0 0 1 0-16M7.81 7.114a.5.5 0 0 0-.638.058l-.058.069a.5.5 0 0 0 .058.638L9.292 10l-2.12 2.121l-.058.07a.5.5 0 0 0 .058.637l.069.058a.5.5 0 0 0 .638-.058L10 10.708l2.121 2.12l.07.058a.5.5 0 0 0 .637-.058l.058-.069a.5.5 0 0 0-.058-.638L10.708 10l2.12-2.121l.058-.07a.5.5 0 0 0-.058-.637l-.069-.058a.5.5 0 0 0-.638.058L10 9.292l-2.121-2.12z">
+                            </path>
+                        </svg>
+                    </span>
+                    {{ error }}。
+                </fluent-message-bar>
+                {% endif %}
+                <fluent-text-input type="text" name="username" class="lf-card-input" autofocus
+                    required>用户名</fluent-text-input>
+                <fluent-text-input type="password" name="password" class="lf-card-input" required>密码</fluent-text-input>
+                <fluent-field label-position="after">
+                    <label slot="label" class="lf-agreement-link">我同意<fluent-link
+                            href="#">用户协议</fluent-link>和<fluent-link href="#">隐私保护协议</fluent-link></label>
+                    <fluent-checkbox slot="input" aria-required="true"
+                        onchange="document.getElementById('lf-login-btn').disabled = !this.checked"></fluent-checkbox>
+                </fluent-field>
+                <fluent-button appearance="primary" type="submit" id="lf-login-btn" disabled>登录</fluent-button>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

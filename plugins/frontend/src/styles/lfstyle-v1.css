@@ -2,7 +2,6 @@
     background: var(--lf-s);
     border: 1px solid var(--lf-b);
     border-radius: 10px;
-    backdrop-filter: blur(5px);
     padding: 24px;
     transition: box-shadow .2s, background .3s;
     position: relative;
@@ -70,7 +69,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--lf-p);
+    /* background: var(--lf-p); */
     border-radius: 8px 8px 0 0;
 }
 
@@ -84,7 +83,7 @@
     justify-content: center;
     height: 100%;
     top: 0;
-    
+
     width: 100%;
     min-height: 100%;
 }
@@ -182,4 +181,71 @@ fluent-menu-item iconify-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+}
+
+fluent-menu-list[popover]:popover-open {
+    animation: menuDropDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: top right;
+}
+
+@keyframes menuDropDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.7);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.lf-loading-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+fluent-message-bar {
+    display: flex;
+    align-items: center;
+    max-height: 20px;
+    font-size: 14px;
+    color: #fff;
+    padding: 8px 12px;
+}
+
+fluent-message-bar::part(root) {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+fluent-message-bar::part(content) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+fluent-message-bar span[slot="icon"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+fluent-message-bar span[slot="icon"] svg {
+    width: 20px;
+    height: 20px;
+    display: block;
 }

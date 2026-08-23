@@ -3,19 +3,6 @@
 {% block page_content %}
 <div class="lf-card-center-wrapper">
     <div class="lf-card lf-card-center">
-        {% if error %}
-        <div class="lf-error-message">
-            <div class="lf-card-header">
-                <div class="lf-card-title"><iconify-icon icon="fluent:error-circle-48-filled"></iconify-icon>Oops!</div>
-                <div class="lf-card-subtitle">出错了</div>
-            </div>
-            <div class="lf-card-content">
-                <p><strong>错误：{{ error }}。</strong></p>
-                <p><strong>解决方案：</strong>请<fluent-link onclick="location.reload()" href="#">刷新页面（点此刷新）</fluent-link>后重试。
-                </p>
-            </div>
-        </div>
-        {% else %}
         <div class="lf-card-header">
             <div class="lf-card-title">在 {{ site.name }} 上注册</div>
             <div class="lf-card-subtitle">欢迎您加入 {{ site.name }}！已有帐户？<fluent-link href="/login">立即登录！</fluent-link>
@@ -23,6 +10,18 @@
         </div>
         <div class="lf-card-content">
             <form method="POST" action="/api/v1/register" class="lf-form">
+                {% if error %}
+                <fluent-message-bar intent="error">
+                    <span slot="icon" style="color: #B10E1C">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+                            <path fill="currentColor"
+                                d="M10 2a8 8 0 1 1 0 16a8 8 0 0 1 0-16M7.81 7.114a.5.5 0 0 0-.638.058l-.058.069a.5.5 0 0 0 .058.638L9.292 10l-2.12 2.121l-.058.07a.5.5 0 0 0 .058.637l.069.058a.5.5 0 0 0 .638-.058L10 10.708l2.121 2.12l.07.058a.5.5 0 0 0 .637-.058l.058-.069a.5.5 0 0 0-.058-.638L10.708 10l2.12-2.121l.058-.07a.5.5 0 0 0-.058-.637l-.069-.058a.5.5 0 0 0-.638.058L10 9.292l-2.121-2.12z">
+                            </path>
+                        </svg>
+                    </span>
+                    {{ error }}。
+                </fluent-message-bar>
+                {% endif %}
                 <fluent-text-input type="email" name="email" class="lf-card-input" autofocus required>
                     <fluent-label weight="regular" size="medium" required>电子邮件</fluent-label>
                 </fluent-text-input>
@@ -41,7 +40,6 @@
                 <fluent-button appearance="primary" type="submit" id="lf-register-btn" disabled>注册</fluent-button>
             </form>
         </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

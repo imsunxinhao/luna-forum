@@ -9,6 +9,11 @@
     {% block ext_script %}{% endblock %}
     <script src="{{ bundlePath }}"></script>
     <link rel="stylesheet" href="{{ stylePath }}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('lf-loading-mask').style.display="none";
+        });
+    </script>
 </head>
 
 <body>
@@ -68,6 +73,9 @@
         </div>
     </main>
     <div class="lf-overlay" data-lf-drawer-overlay></div>
+    <div class="lf-loading-mask" id="lf-loading-mask">
+        <fluent-spinner></fluent-spinner>
+    </div>
 </body>
 
 </html>

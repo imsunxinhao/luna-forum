@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block ext_script %}
+<link rel="stylesheet" href="/static/katex/katex.min.css">
+<script src="/static/twemoji/twemoji.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.twemoji === 'undefined') return;
+    twemoji.base = '/static/twemoji/';
+    twemoji.size = '64';
+    twemoji.ext = '.png';
+    const el = document.querySelector('.lf-post-content');
+    if (el) twemoji.parse(el);
+});
+</script>
+{% endblock %}
+{% block page_content %}
+<div class="lf-home">
+
+    {% if error %}
+    <section class="lf-card lf-post-card">
+        <div class="lf-card-header">
+            <div class="lf-card-title"><iconify-icon icon="fluent:error-circle-48-filled"></iconify-icon>Oops!</div>
+            <div class="lf-card-subtitle">出错了</div>
+        </div>
+        <div class="lf-card-content">
+            <p><strong>{{ error }}</strong></p>
+            <p><fluent-link href="/">返回首页</fluent-link></p>
+        </div>
+    </section>
+    {% else %}
+    <article class="lf-card lf-post-card">
+        <div class="lf-card-accent"></div>
+        <header class="lf-post-header">
+            <h1 class="lf-post-detail-title">{{ post.title }}</h1>
+            <div class="lf-post-meta">
+                <span class="lf-post-author">
+                    <fluent-avatar size="20" class="lf-post-avatar" initials="{{ post.authorInitial }}"></fluent-avatar>
+                    {{ post.authorName }}
+                </span>
+                {% if post.tagName %}
+                <fluent-badge appearance="tint">{{ post.tagName }}</fluent-badge>
+                {% endif %}
+                <span class="lf-post-time">
+                    <iconify-icon icon="fluent:clock-16-regular"></iconify-icon>
+                    {{ post.createdAtLabel }}
+                </span>
+            </div>
+        </header>
+        <div class="lf-post-content">{{ post.contentHtml | safe }}</div>
+    </article>
+    {% endif %}
+
+</div>
+{% endblock %}

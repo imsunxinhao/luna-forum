@@ -12,6 +12,10 @@ interface FileSystemLoaderLike {
     searchPaths: string[];
 }
 
+interface LoaderContainerLike {
+    loaders: FileSystemLoaderLike[];
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const templatesPath = resolve(__dirname, 'templates');
 const env = nunjucks.configure(templatesPath, { autoescape: true });
@@ -22,8 +26,10 @@ export function setRequest(request: FastifyRequest): void {
     currentRequest = request;
 }
 
-function getLoader(environment: nunjucks.Environment): FileSystemLoaderLike {
-    return (environment as unknown as { loader: FileSystemLoaderLike }).loader;
+function getLoader(environment: nunjucks.Environment): FileSystemLoaderLike | null {
+    const container = environment as unknown as LoaderContainerLike;
+    if (!Array.isArray(container.loaders)) return null;
+    return container.loaders.find((loader) => loader && Array.isArray(loader.searchPaths)) ?? null;
 }
 
 export function addTemplatePath(path: string): void {

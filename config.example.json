@@ -6,9 +6,16 @@
     "jwt_secret": "your-super-secret-key-here-please-change-it-thanks",
     "plugins": [
         {
+            "name": "frontend",
+            "main": "./plugins/frontend/index.ts",
+            "deps": []
+        },
+        {
             "name": "post",
             "main": "./plugins/post/index.ts",
-            "deps": []
+            "deps": [
+                "frontend"
+            ]
         },
         {
             "name": "post-pinned",
@@ -27,11 +34,6 @@
         {
             "name": "home",
             "main": "./plugins/home/index.ts",
-            "deps": []
-        },
-        {
-            "name": "frontend",
-            "main": "./plugins/frontend/index.ts",
             "deps": []
         }
     ]

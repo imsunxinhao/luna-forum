@@ -27,8 +27,8 @@
 
 ## 🛠️ 技术栈
 
-| 技术 | 用途 | 版本 |
-|------|------|------|
+| 技术 | 用途 |
+|------|------|
 | [TypeScript](https://www.typescriptlang.org/) | 开发语言 |
 | [Fastify](https://www.fastify.io/) | Web 框架 |
 | [Nunjucks](https://mozilla.github.io/nunjucks/) | 模板引擎 |

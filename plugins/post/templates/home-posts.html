@@ -1,0 +1,37 @@
+<section class="lf-section">
+    <div class="lf-section-header">
+        <div class="lf-section-title">
+            <iconify-icon icon="fluent:document-text-24-regular"></iconify-icon>
+            最新帖子
+        </div>
+    </div>
+    <div class="lf-card lf-post-list-card">
+        {% if posts.length %}
+        <ul class="lf-post-list">
+            {% for post in posts %}
+            <li class="lf-post-item">
+                <a class="lf-post-title" href="/post/{{ post.id }}">
+                    {% if post.pinned %}<iconify-icon class="lf-pin" icon="fluent:pin-16-filled"></iconify-icon>{% endif %}
+                    {{ post.title }}
+                </a>
+                <div class="lf-post-meta">
+                    <span class="lf-post-author">
+                        <fluent-avatar size="20" class="lf-post-avatar" initials="{{ post.authorInitial }}"></fluent-avatar>
+                        {{ post.authorName }}
+                    </span>
+                    {% if post.tagName %}
+                    <fluent-badge appearance="tint">{{ post.tagName }}</fluent-badge>
+                    {% endif %}
+                    <span class="lf-post-time">
+                        <iconify-icon icon="fluent:clock-16-regular"></iconify-icon>
+                        {{ post.createdAtLabel }}
+                    </span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="lf-empty">暂无帖子</div>
+        {% endif %}
+    </div>
+</section>

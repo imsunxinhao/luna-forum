@@ -19,7 +19,7 @@ export function setJWTSecret(secret: string): void {
     jwtSecret = secret
 }
 
-function isFormRequest(request: FastifyRequest): boolean {
+export function isFormRequest(request: FastifyRequest): boolean {
     const headers = request.headers;
     const contentType = headers['content-type'];
     return typeof contentType === 'string' && contentType.includes('application/x-www-form-urlencoded');

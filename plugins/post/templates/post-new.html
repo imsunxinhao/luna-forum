@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+{% block ext_script %}
+<link rel="stylesheet" href="/static/monaco/vs/editor/editor.main.css">
+<link rel="stylesheet" href="/static/katex/katex.min.css">
+<script src="/static/marked.js"></script>
+<script src="/static/katex/katex.min.js"></script>
+<script src="/static/twemoji/twemoji.min.js"></script>
+<script>var require = { paths: { vs: '/static/monaco/vs' } };</script>
+<script src="/static/monaco/vs/loader.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const editorEl = document.getElementById('post-editor');
+    const contentInput = document.getElementById('post-content-input');
+    const preview = document.getElementById('post-preview');
+    const toggle = document.getElementById('post-preview-toggle');
+    if (!editorEl || !contentInput || !preview || !toggle) return;
+
+    // Monaco 编辑器初始化
+    require(['vs/editor/editor.main'], function () {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const editor = monaco.editor.create(editorEl, {
+            value: contentInput.value || '',
+            language: 'markdown',
+            theme: isDark ? 'vs-dark' : 'vs',
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            wordWrap: 'on'
+        });
+        window.__postEditor = editor;
+
+        // 提交前把编辑器内容同步到隐藏字段
+        document.getElementById('post-form').addEventListener('submit', function () {
+            contentInput.value = editor.getValue();
+        });
+
+        // 预览
+        if (typeof window.marked === 'undefined' || typeof window.katex === 'undefined') return;
+
+        if (typeof window.twemoji !== 'undefined') {
+            twemoji.base = '/static/twemoji/';
+            twemoji.size = '64';
+            twemoji.ext = '.png';
+        }
+
+        const mathExtension = {
+            extensions: [
+                {
+                    name: 'mathBlock',
+                    level: 'block',
+                    start: function (src) { return src.indexOf('$$'); },
+                    tokenizer: function (src) {
+                        const match = /^\$\$\n?([\s\S]+?)\n?\$\$/.exec(src);
+                        if (match) return { type: 'mathBlock', raw: match[0], text: match[1].trim() };
+                    },
+                    renderer: function (token) {
+                        try {
+                            return '<div class="lf-katex-display">' + katex.renderToString(token.text, { displayMode: true, throwOnError: false }) + '</div>';
+                        } catch (e) {
+                            return '<pre><code>' + token.text + '</code></pre>';
+                        }
+                    }
+                },
+                {
+                    name: 'mathInline',
+                    level: 'inline',
+                    start: function (src) { return src.indexOf('$'); },
+                    tokenizer: function (src) {
+                        const match = /^\$([^$\n]+?)\$/.exec(src);
+                        if (match) return { type: 'mathInline', raw: match[0], text: match[1].trim() };
+                    },
+                    renderer: function (token) {
+                        try {
+                            return katex.renderToString(token.text, { displayMode: false, throwOnError: false });
+                        } catch (e) {
+                            return token.text;
+                        }
+                    }
+                }
+            ]
+        };
+        marked.use(mathExtension);
+
+        function render() {
+            const raw = editor.getValue() || '';
+            preview.innerHTML = raw ? marked.parse(raw) : '<p class="lf-empty">暂无内容</p>';
+            if (typeof window.twemoji !== 'undefined') {
+                twemoji.parse(preview);
+            }
+        }
+
+        function showPreview() {
+            render();
+            editorEl.style.display = 'none';
+            preview.hidden = false;
+            toggle.textContent = '编辑';
+        }
+
+        function showEdit() {
+            editorEl.style.display = '';
+            preview.hidden = true;
+            toggle.textContent = '预览';
+            editor.layout();
+        }
+
+        toggle.addEventListener('click', function () {
+            if (preview.hidden) showPreview();
+            else showEdit();
+        });
+    });
+});
+</script>
+{% endblock %}
+{% block page_content %}
+<div class="lf-card-center-wrapper">
+    <div class="lf-card lf-card-center lf-new-post-card">
+        {% if error %}
+        <div class="lf-card-header">
+            <div class="lf-card-title"><iconify-icon icon="fluent:error-circle-48-filled"></iconify-icon>Oops!</div>
+            <div class="lf-card-subtitle">出错了</div>
+        </div>
+        <div class="lf-card-content">
+            <p><strong>{{ error }}</strong></p>
+            <p><fluent-link href="/post/new">返回重试</fluent-link></p>
+        </div>
+        {% elif not user %}
+        <div class="lf-card-header">
+            <div class="lf-card-title">请先登录</div>
+            <div class="lf-card-subtitle">发布帖子需要登录</div>
+        </div>
+        <div class="lf-card-content">
+            <p>还没有帐户？<fluent-link href="/register">注册一个！</fluent-link></p>
+            <p>已有帐户？<fluent-link href="/login">立即登录</fluent-link></p>
+        </div>
+        {% elif not canCreate %}
+        <div class="lf-card-header">
+            <div class="lf-card-title"><iconify-icon icon="fluent:error-circle-48-filled"></iconify-icon>Oops!</div>
+            <div class="lf-card-subtitle">出错了</div>
+        </div>
+        <div class="lf-card-content">
+            <p><strong>您没有权限发帖。</strong></p>
+        </div>
+        {% else %}
+        <div class="lf-card-header">
+            <div class="lf-card-title">发布新帖</div>
+            <div class="lf-card-subtitle">支持 Markdown 与 KaTeX 公式（<code>$...$</code> 行内、<code>$$...$$</code> 块级）</div>
+        </div>
+        <div class="lf-card-content">
+            <form method="POST" action="/api/v1/post/create" class="lf-form" id="post-form">
+                <fluent-text-input type="text" name="title" class="lf-card-input" autofocus required value="{{ formTitle }}">标题</fluent-text-input>
+
+                <input type="hidden" name="content" id="post-content-input" value="{{ formContent }}">
+                <div id="post-editor" class="lf-post-composer-editor"></div>
+
+                <fluent-field label-position="above">
+                    <label slot="label" for="post-tag-dropdown" id="post-tag-dropdown--label">板块（可选）</label>
+                    <fluent-dropdown slot="input" id="post-tag-dropdown" name="tagId" placeholder="选择板块" aria-labelledby="post-tag-dropdown--label" style="anchor-name: --post-tag-anchor;" type="dropdown" appearance="outline">
+                        <fluent-listbox id="post-tag-listbox" popover="manual" tabindex="-1" style="position-anchor: --post-tag-anchor;">
+                            <fluent-option value="">无</fluent-option>
+                            {% for tag in tags %}
+                            <fluent-option value="{{ tag.id }}">{{ tag.name }}</fluent-option>
+                            {% endfor %}
+                        </fluent-listbox>
+                        <button aria-haspopup="listbox" role="combobox" type="button" slot="control" aria-controls="post-tag-listbox" id="post-tag-control">选择板块</button>
+                    </fluent-dropdown>
+                </fluent-field>
+
+                <div class="lf-post-composer-toolbar">
+                    <fluent-button id="post-preview-toggle" appearance="secondary" type="button">预览</fluent-button>
+                    <fluent-button appearance="primary" type="submit">发布</fluent-button>
+                </div>
+            </form>
+            <div class="lf-post-content lf-post-preview" id="post-preview" hidden></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

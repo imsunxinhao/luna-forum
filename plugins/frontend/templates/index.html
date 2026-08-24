@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+{% block ext_script %}{% endblock %}
+{% block page_content %}
+<div class="lf-home">
+
+    {% block home_hero %}
+    <!-- 欢迎横幅 -->
+    <section class="lf-card lf-hero">
+        <div class="lf-card-accent"></div>
+        <div class="lf-hero-body">
+            <div class="lf-hero-title">{{ site.name }}</div>
+            <div class="lf-hero-desc">
+                {% if user %}
+                    欢迎回来，<strong>{{ user.username }}</strong>！
+                {% else %}
+                    欢迎来到 {{ site.name }}！
+                {% endif %}
+            </div>
+        </div>
+        <div class="lf-stats">
+            <div class="lf-stat">
+                <span class="lf-stat-value">{{ stats.postCount }}</span>
+                <span class="lf-stat-label">帖子</span>
+            </div>
+            <div class="lf-stat">
+                <span class="lf-stat-value">{{ stats.tagCount }}</span>
+                <span class="lf-stat-label">板块</span>
+            </div>
+            <div class="lf-stat">
+                <span class="lf-stat-value">{{ stats.userCount }}</span>
+                <span class="lf-stat-label">用户</span>
+            </div>
+        </div>
+    </section>
+    {% endblock %}
+
+    {% block home_tags %}
+    <!-- 板块 -->
+    <section class="lf-section">
+        <div class="lf-section-header">
+            <div class="lf-section-title">
+                <iconify-icon icon="fluent:grid-24-regular"></iconify-icon>
+                板块
+            </div>
+        </div>
+        {% if tags.length %}
+        <div class="lf-card-grid">
+            {% for tag in tags %}
+            <a class="lf-card lf-tag-card" href="#">
+                <div class="lf-card-accent"></div>
+                <span class="lf-tag-icon">
+                    <iconify-icon icon="fluent:folder-24-regular"></iconify-icon>
+                </span>
+                <span class="lf-tag-info">
+                    <span class="lf-tag-name">{{ tag.name }}</span>
+                    <span class="lf-tag-meta">{{ tag.postCount }} 帖子</span>
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="lf-card">
+            <div class="lf-empty">暂无板块</div>
+        </div>
+        {% endif %}
+    </section>
+    {% endblock %}
+
+    {% block home_posts %}
+    {% include "home-posts.html" %}
+    {% endblock %}
+
+</div>
+{% endblock %}

@@ -70,7 +70,6 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--lf-p);
     border-radius: 8px 8px 0 0;
 }
 
@@ -182,4 +181,425 @@ fluent-menu-item iconify-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+}
+
+.lf-home {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.lf-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 28px 32px;
+}
+
+.lf-hero-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.lf-hero-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--lf-t);
+}
+
+.lf-hero-desc {
+    font-size: 14px;
+    color: var(--lf-ts);
+    line-height: 1.6;
+}
+
+.lf-stats {
+    display: flex;
+    gap: 32px;
+    flex-shrink: 0;
+}
+
+.lf-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 60px;
+}
+
+.lf-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--lf-p);
+    line-height: 1;
+}
+
+.lf-stat-label {
+    font-size: 12px;
+    color: var(--lf-ts);
+}
+
+.lf-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lf-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.lf-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--lf-t);
+}
+
+.lf-section-title iconify-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--lf-p);
+}
+
+a.lf-tag-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: box-shadow .2s, transform .2s, background .3s;
+}
+
+.lf-tag-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--lf-al);
+    color: var(--lf-p);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.lf-tag-icon iconify-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+}
+
+.lf-tag-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.lf-tag-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--lf-t);
+}
+
+.lf-tag-meta {
+    font-size: 12px;
+    color: var(--lf-ts);
+}
+
+.lf-post-list-card {
+    padding: 0;
+}
+
+.lf-post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lf-post-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--lf-b);
+}
+
+.lf-post-item:last-child {
+    border-bottom: none;
+}
+
+.lf-post-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--lf-t);
+    text-decoration: none;
+}
+
+.lf-post-title .lf-pin {
+    color: var(--lf-p);
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.lf-post-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--lf-ts);
+}
+
+.lf-post-author {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lf-post-avatar {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+}
+
+.lf-post-meta fluent-badge {
+    font-size: inherit;
+    line-height: 1;
+}
+
+.lf-post-time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lf-post-time iconify-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+.lf-empty {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--lf-ts);
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .lf-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .lf-stats {
+        width: 100%;
+        justify-content: space-between;
+        gap: 16px;
+    }
+}
+
+/* ===== Post detail ===== */
+.lf-post-card {
+    padding: 28px 32px;
+}
+
+.lf-post-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--lf-b);
+}
+
+.lf-post-detail-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--lf-t);
+    line-height: 1.3;
+}
+
+.lf-post-content {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--lf-t);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.lf-post-content > :first-child {
+    margin-top: 0;
+}
+
+.lf-post-content > :last-child {
+    margin-bottom: 0;
+}
+
+.lf-post-content p {
+    margin: 0 0 12px;
+}
+
+.lf-post-content h1,
+.lf-post-content h2,
+.lf-post-content h3,
+.lf-post-content h4,
+.lf-post-content h5,
+.lf-post-content h6 {
+    margin: 24px 0 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--lf-t);
+}
+
+.lf-post-content h1 { font-size: 24px; }
+.lf-post-content h2 { font-size: 20px; }
+.lf-post-content h3 { font-size: 17px; }
+.lf-post-content h4 { font-size: 15px; }
+
+.lf-post-content ul,
+.lf-post-content ol {
+    margin: 0 0 12px;
+    padding-left: 24px;
+}
+
+.lf-post-content li {
+    margin: 4px 0;
+}
+
+.lf-post-content a {
+    color: var(--lf-p);
+    text-decoration: none;
+}
+
+.lf-post-content a:hover {
+    text-decoration: underline;
+}
+
+.lf-post-content code {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    background: var(--lf-h);
+    border-radius: 4px;
+    padding: 2px 5px;
+}
+
+.lf-post-content pre {
+    background: var(--lf-h);
+    border: 1px solid var(--lf-b);
+    border-radius: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    margin: 0 0 12px;
+}
+
+.lf-post-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.lf-post-content blockquote {
+    margin: 0 0 12px;
+    padding: 4px 16px;
+    border-left: 3px solid var(--lf-p);
+    color: var(--lf-ts);
+    background: var(--lf-h);
+    border-radius: 0 6px 6px 0;
+}
+
+.lf-post-content img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+.lf-post-content table {
+    border-collapse: collapse;
+    margin: 0 0 12px;
+    width: 100%;
+}
+
+.lf-post-content th,
+.lf-post-content td {
+    border: 1px solid var(--lf-b);
+    padding: 6px 12px;
+    text-align: left;
+}
+
+.lf-post-content th {
+    background: var(--lf-h);
+}
+
+.lf-post-content hr {
+    border: none;
+    border-top: 1px solid var(--lf-b);
+    margin: 20px 0;
+}
+
+.lf-katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 0;
+    text-align: center;
+}
+
+/* ===== Post composer (发帖) ===== */
+.lf-new-post-card {
+    max-width: 720px;
+}
+
+.lf-post-composer-editor {
+    height: 360px;
+    border: 1px solid var(--lf-b);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.lf-post-composer-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.lf-post-composer-toolbar fluent-button {
+    margin: 0;
+}
+
+.lf-post-preview {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--lf-b);
+}
+
+.lf-post-preview .lf-empty {
+    padding: 24px 0;
+}
+
+/* ===== Twemoji 表情 ===== */
+img.emoji {
+    height: 1.2em;
+    width: 1.2em;
+    margin: 0 0.05em 0 0.1em;
+    vertical-align: -0.1em;
+    display: inline;
 }

@@ -5,8 +5,6 @@ import bcrypt from 'bcrypt'
 import { RegisterBody, LoginBody } from './types.js'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-const PRIV_REGISTER_ACCOUNT = 0
-const PRIV_LOGIN = 1
 const SALT_ROUNDS = 10
 const COOKIE_NAME = 'client_key'
 const TOKEN_EXPIRES = 7 * 24 * 60 * 60
@@ -20,14 +18,9 @@ export function setJWTSecret(secret: string): void {
 }
 
 function isFormRequest(request: FastifyRequest): boolean {
-    const headers = request.headers;
-    const contentType = headers['content-type'];
-    return typeof contentType === 'string' && contentType.includes('application/x-www-form-urlencoded');
-}
-
-export function registerAuthPrivs(): void {
-    privManager.register('PRIV_REGISTER_ACCOUNT', String(PRIV_REGISTER_ACCOUNT))
-    privManager.register('PRIV_LOGIN', String(PRIV_LOGIN), true)
+    const headers = request.headers
+    const contentType = headers['content-type']
+    return typeof contentType === 'string' && contentType.includes('application/x-www-form-urlencoded')
 }
 
 export function signToken(userId: number): string {
@@ -45,30 +38,29 @@ export function verifyToken(token: string): { uid: number } | null {
 }
 
 export async function getCurrentUser(request: FastifyRequest): Promise<Record<string, unknown> | null> {
-    const userId = getUserIdFromRequest(request);
-    if (userId === 0) return null;
-    const db = getDB();
+    const userId = getUserIdFromRequest(request)
+    if (userId === 0) return null
+    const db = getDB()
     const user = await db.collection('users').findOne(
         { uid: userId },
         { projection: { password: 0, twofaSecret: 0, _id: 0 } }
-    );
-    if (!user) return null;
-    const safeUser: Record<string, unknown> = {};
+    )
+    if (!user) return null
+    const safeUser: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(user)) {
         if (value instanceof Date) {
-            safeUser[key] = value.toISOString();
+            safeUser[key] = value.toISOString()
         } else if (value instanceof Buffer) {
-            safeUser[key] = value.toString('hex');
+            safeUser[key] = value.toString('hex')
         } else if (value && typeof value === 'object' && '_bsontype' in value) {
-            // MongoDB BSON 类型（ObjectId 等），转为字符串表示
-            safeUser[key] = String(value);
+            safeUser[key] = String(value)
         } else if (Array.isArray(value)) {
-            safeUser[key] = value.map(v => v instanceof Date ? v.toISOString() : v);
+            safeUser[key] = value.map(v => v instanceof Date ? v.toISOString() : v)
         } else {
-            safeUser[key] = value;
+            safeUser[key] = value
         }
     }
-    return safeUser;
+    return safeUser
 }
 
 function setAuthCookie(reply: FastifyReply, token: string): void {
@@ -78,49 +70,36 @@ function setAuthCookie(reply: FastifyReply, token: string): void {
         sameSite: 'lax',
         path: '/',
         maxAge: TOKEN_EXPIRES
-    });
+    })
 }
 
 function clearAuthCookie(reply: FastifyReply): void {
-    reply.clearCookie(COOKIE_NAME, { path: '/' });
+    reply.clearCookie(COOKIE_NAME, { path: '/' })
 }
 
 export function getUserIdFromRequest(request: FastifyRequest): number {
-    const req = request as RequestWithCookies;
-    const cookieToken = req.cookies?.[COOKIE_NAME];
+    const req = request as RequestWithCookies
+    const cookieToken = req.cookies?.[COOKIE_NAME]
     if (cookieToken) {
-        const payload = verifyToken(cookieToken);
-        if (payload) return payload.uid;
+        const payload = verifyToken(cookieToken)
+        if (payload) return payload.uid
     }
-    const authHeader = request.headers.authorization;
-    if (!authHeader) return 0;
-    const token = authHeader.replace('Bearer ', '');
-    const payload = verifyToken(token);
-    return payload ? payload.uid : 0;
-}
-
-export async function initGuestPriv(): Promise<void> {
-    const db = getDB()
-    const guest = await db.collection('users').findOne({ uid: 0 })
-    // 仅在 guest 不存在或权限为初始值时设置 register 权限，避免每次启动覆盖管理员修改
-    if (!guest || String(guest.priv) === '0') {
-        const registerPriv = BigInt(1) << BigInt(PRIV_REGISTER_ACCOUNT)
-        await db.collection('users').updateOne(
-            { uid: 0 },
-            { $set: { priv: registerPriv.toString() } }
-        )
-    }
+    const authHeader = request.headers.authorization
+    if (!authHeader) return 0
+    const token = authHeader.replace('Bearer ', '')
+    const payload = verifyToken(token)
+    return payload ? payload.uid : 0
 }
 
 export function setupAuthRoutes(server: FastifyInstance): void {
     server.post<{ Body: RegisterBody }>('/api/v1/register', async (request, reply) => {
         const { username, password, email } = request.body
         const db = getDB()
-        const canRegister = await privManager.hasPriv(0, PRIV_REGISTER_ACCOUNT)
+        const canRegister = await privManager.hasPriv(0, 'auth:register')
         if (!canRegister) {
             if (isFormRequest(request)) {
-                request.flash('error', '您没有权限注册账户');
-                return reply.redirect('/register');
+                request.flash('error', '您没有权限注册账户')
+                return reply.redirect('/register')
             }
             return reply.code(403).send({ success: false, error: 'Registration not allowed' })
         }
@@ -130,71 +109,78 @@ export function setupAuthRoutes(server: FastifyInstance): void {
         if (existingUser) {
             if (isFormRequest(request)) {
                 request.flash('error', '用户名或邮箱已存在')
-                return reply.redirect('/register');
+                return reply.redirect('/register')
             }
             return reply.code(409).send({ success: false, error: 'Username or email already exists' })
         }
         const userCount = await db.collection('users').countDocuments({ uid: { $gt: 0 } })
-        const maxUser = await db.collection('users').find().sort({ uid: -1 }).limit(1).toArray()
-        const newUid = await nextUid();
-        const privValue = userCount === 0 ? '-1' : privManager.getDefaultPriv()
+        const newUid = await nextUid()
+
+        const roles: string[] = []
+        if (userCount === 0) {
+            const superuserRole = await db.collection('roles').findOne({ name: 'superuser' })
+            if (superuserRole) roles.push(superuserRole._id.toString())
+        }
+        if (roles.length === 0) {
+            const defaultRole = await db.collection('roles').findOne({ name: 'default' })
+            if (defaultRole) roles.push(defaultRole._id.toString())
+        }
+
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
         await db.collection('users').insertOne({
             uid: newUid,
             username,
             email,
             password: hashedPassword,
-            priv: privValue,
+            roles,
             banned: false,
             createdAt: new Date()
         })
         const token = signToken(newUid)
         setAuthCookie(reply, token)
-        if (isFormRequest(request)) return reply.redirect('/');
+        if (isFormRequest(request)) return reply.redirect('/')
         return reply.code(201).send({ success: true, uid: newUid, username, token })
     })
 
     server.post<{ Body: LoginBody }>('/api/v1/login', async (request, reply) => {
-        const { username, password } = request.body;
-        const db = getDB();
-        const user = await db.collection('users').findOne({ username });
+        const { username, password } = request.body
+        const db = getDB()
+        const user = await db.collection('users').findOne({ username })
         if (!user) {
             if (isFormRequest(request)) {
-                request.flash('error', '用户名或密码错误');
-                return reply.redirect('/login');
+                request.flash('error', '用户名或密码错误')
+                return reply.redirect('/login')
             }
-            return reply.code(401).send({ success: false, error: 'Invalid credentials' });
+            return reply.code(401).send({ success: false, error: 'Invalid credentials' })
         }
-        const passwordMatch = await bcrypt.compare(password, user.password);
+        const passwordMatch = await bcrypt.compare(password, user.password)
         if (!passwordMatch) {
             if (isFormRequest(request)) {
-                request.flash('error', '用户名或密码错误');
-                return reply.redirect('/login');
+                request.flash('error', '用户名或密码错误')
+                return reply.redirect('/login')
             }
-            return reply.code(401).send({ success: false, error: 'Invalid credentials' });
+            return reply.code(401).send({ success: false, error: 'Invalid credentials' })
         }
-        const canLogin = await privManager.hasPriv(user.uid, PRIV_LOGIN);
+        const canLogin = await privManager.hasPriv(user.uid, 'auth:login')
         if (!canLogin) {
             if (isFormRequest(request)) {
-                request.flash('error', '用户无法登录');
-                return reply.redirect('/login');
+                request.flash('error', '用户无法登录')
+                return reply.redirect('/login')
             }
-            return reply.code(403).send({ success: false, error: 'User cannot login' });
+            return reply.code(403).send({ success: false, error: 'User cannot login' })
         }
-        const token = signToken(user.uid);
-        setAuthCookie(reply, token);
+        const token = signToken(user.uid)
+        setAuthCookie(reply, token)
         if (isFormRequest(request)) {
-            request.flash('success', '登录成功');
-            return reply.redirect('/');
+            request.flash('success', '登录成功')
+            return reply.redirect('/')
         }
-        return reply.code(200).send({ success: true, token, user: { uid: user.uid, username: user.username } });
-    });
+        return reply.code(200).send({ success: true, token, user: { uid: user.uid, username: user.username } })
+    })
 
     server.post('/api/v1/logout', async (_request: FastifyRequest, reply: FastifyReply) => {
-        clearAuthCookie(reply);
-        if (isFormRequest(_request)) return reply.redirect(_request.headers.referer ?? '/');
-        return { success: true };
+        clearAuthCookie(reply)
+        if (isFormRequest(_request)) return reply.redirect(_request.headers.referer ?? '/')
+        return { success: true }
     })
 }
-
-export { PRIV_REGISTER_ACCOUNT, PRIV_LOGIN }

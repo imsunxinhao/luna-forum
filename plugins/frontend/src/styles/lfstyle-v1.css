@@ -84,7 +84,7 @@
     justify-content: center;
     height: 100%;
     top: 0;
-    
+
     width: 100%;
     min-height: 100%;
 }
@@ -224,6 +224,7 @@ fluent-menu-item iconify-icon {
 }
 
 @media (max-width: 768px) {
+
     .lf-section-3-7,
     .lf-section-7-3,
     .lf-section-5-5,
@@ -277,7 +278,7 @@ fluent-message-bar span[slot="icon"] svg {
     margin-bottom: 2px;
 }
 
-.lf-card-subtitle + fluent-message-bar {
+.lf-card-subtitle+fluent-message-bar {
     margin-top: 5px;
 }
 
@@ -337,12 +338,30 @@ fluent-message-bar span[slot="icon"] svg {
     color: var(--lf-t);
 }
 
-.lf-post-content h1 { font-size: 1.8em; }
-.lf-post-content h2 { font-size: 1.5em; }
-.lf-post-content h3 { font-size: 1.25em; }
-.lf-post-content h4 { font-size: 1.1em; }
-.lf-post-content h5 { font-size: 1em; }
-.lf-post-content h6 { font-size: 0.9em; color: var(--lf-ts); }
+.lf-post-content h1 {
+    font-size: 1.8em;
+}
+
+.lf-post-content h2 {
+    font-size: 1.5em;
+}
+
+.lf-post-content h3 {
+    font-size: 1.25em;
+}
+
+.lf-post-content h4 {
+    font-size: 1.1em;
+}
+
+.lf-post-content h5 {
+    font-size: 1em;
+}
+
+.lf-post-content h6 {
+    font-size: 0.9em;
+    color: var(--lf-ts);
+}
 
 .lf-post-content .lf-post-meta,
 .lf-post-content .lf-meta,
@@ -448,4 +467,69 @@ fluent-message-bar span[slot="icon"] svg {
 .lf-post-content th {
     font-weight: 700;
     color: var(--lf-t);
+}
+
+.lf-post-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.lf-post-sidebar fluent-menu {
+    width: 50%;
+    display: block;
+}
+
+.lf-post-sidebar fluent-menu-button,
+.lf-post-sidebar fluent-menu-button::part(button),
+.lf-post-sidebar fluent-menu-button::part(root) {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+fluent-menu-list[popover] {
+    animation: lf-menu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes lf-menu-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.lf-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lf-section {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    margin-bottom: 16px;
+}
+
+.lf-section-7-3 {
+    grid-template-columns: 7fr 3fr;
+}
+
+@media (max-width: 768px) {
+    .lf-section-7-3 {
+        grid-template-columns: 1fr;
+    }
 }

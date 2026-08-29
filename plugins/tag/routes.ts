@@ -3,12 +3,6 @@ import { KernelAPI } from '../../src/types.js'
 import { FastifyInstance } from 'fastify'
 import { CreateTagBody, IdAndPostIdParams, DeletePostParams, UpdateTagBody, SortTagBody, MoveTagBody, ModeratorBody, IdParams, PostsQuery } from './types.js';
 
-const TAG_MAGIC = 500
-const PRIV_TAG_CREATE = TAG_MAGIC + 0
-const PRIV_TAG_EDIT = TAG_MAGIC + 1
-const PRIV_TAG_DELETE = TAG_MAGIC + 2
-const PRIV_TAG_MOD = TAG_MAGIC + 3
-
 async function isTagMod(db: Db, tagId: string, userId: number) {
     const tag = await db
         .collection('tags')
@@ -22,12 +16,10 @@ async function isTagMod(db: Db, tagId: string, userId: number) {
 export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
     server.post<{ Body: CreateTagBody }>('/api/v1/tag/create', async (request, reply) => {
         const { name, parentId, sortOrder } = request.body
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
 
-        const canCreate = await kernel.hasPriv(userId, PRIV_TAG_CREATE)
+        const canCreate = await kernel.hasPriv(userId, 'tag:create')
         if (!canCreate) {
             return reply.code(403).send({ error: 'No permission to create tag' })
         }
@@ -68,13 +60,9 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.put<{ Params: IdParams; Body: UpdateTagBody }>('/api/v1/tag/:id', async (request, reply) => {
         const { id } = request.params
-
         const { name, sortOrder, requireTag } = request.body
-
         const userId = kernel.getUserIdFromRequest(request)
-
-        const canEdit = await kernel.hasPriv(userId, PRIV_TAG_EDIT)
-
+        const canEdit = await kernel.hasPriv(userId, 'tag:edit')
         const db = kernel.getDB()
 
         if (!canEdit) {
@@ -100,12 +88,10 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.delete<{ Params: IdParams }>('/api/v1/tag/:id', async (request, reply) => {
         const { id } = request.params
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
 
-        const canDelete = await kernel.hasPriv(userId, PRIV_TAG_DELETE)
+        const canDelete = await kernel.hasPriv(userId, 'tag:delete')
         if (!canDelete) {
             return reply.code(403).send({ error: 'No permission to delete tag' })
         }
@@ -125,14 +111,11 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.put<{ Params: IdParams; Body: SortTagBody }>('/api/v1/tag/:id/sort', async (request, reply) => {
         const { id } = request.params
-
         const { sortOrder } = request.body
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
 
-        const canEdit = await kernel.hasPriv(userId, PRIV_TAG_EDIT)
+        const canEdit = await kernel.hasPriv(userId, 'tag:edit')
         if (!canEdit) {
             return reply.code(403).send({ error: 'No permission' })
         }
@@ -151,14 +134,11 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.put<{ Params: IdParams; Body: MoveTagBody }>('/api/v1/tag/:id/move', async (request, reply) => {
         const { id } = request.params
-
         const { newParentId } = request.body
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
 
-        const canEdit = await kernel.hasPriv(userId, PRIV_TAG_EDIT)
+        const canEdit = await kernel.hasPriv(userId, 'tag:edit')
         if (!canEdit) {
             return reply.code(403).send({ error: 'No permission' })
         }
@@ -184,46 +164,35 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.get<{ Params: IdParams; Querystring: PostsQuery }>('/api/v1/tag/list', async () => {
         const db = kernel.getDB()
-
         const tags = await db.collection('tags')
             .find()
             .sort({ sortOrder: 1 })
             .toArray()
-
         return { tags }
     })
 
     server.get<{ Params: IdParams; Querystring: PostsQuery }>('/api/v1/tag/:id', async (request, reply) => {
         const { id } = request.params
-
         const db = kernel.getDB()
-
         const tag = await db.collection('tags').findOne({ _id: new ObjectId(id) })
         if (!tag) {
             return reply.code(404).send({ error: 'Tag not found' })
         }
-
         return tag
     })
 
     server.get<{ Params: IdParams; Querystring: PostsQuery }>('/api/v1/tag/:id/posts', async (request) => {
         const { id } = request.params
-
         const { page = 1, limit = 20 } = request.query
-
         const db = kernel.getDB()
-
         const skip = (Number(page) - 1) * Number(limit)
-
         const posts = await db.collection('posts')
             .find({ tagId: id })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(Number(limit))
             .toArray()
-
         const total = await db.collection('posts').countDocuments({ tagId: id })
-
         return {
             posts,
             total,
@@ -234,14 +203,10 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.put<{ Params: IdParams; Body: ModeratorBody }>('/api/v1/tag/:id/moderator/add', async (request, reply) => {
         const { id } = request.params
-
         const { userId: targetUserId } = request.body
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
-
-        const canManage = await kernel.hasPriv(userId, PRIV_TAG_MOD)
+        const canManage = await kernel.hasPriv(userId, 'tag:mod')
 
         if (!canManage) {
             return reply.code(403).send({ error: 'No permission' })
@@ -267,14 +232,10 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.put<{ Params: IdParams; Body: ModeratorBody }>('/api/v1/tag/:id/moderator/remove', async (request, reply) => {
         const { id } = request.params
-
         const { userId: targetUserId } = request.body
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
-
-        const canManage = await kernel.hasPriv(userId, PRIV_TAG_MOD)
+        const canManage = await kernel.hasPriv(userId, 'tag:mod')
         if (!canManage) {
             return reply.code(403).send({ error: 'No permission' })
         }
@@ -296,14 +257,10 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.delete<{ Params: DeletePostParams }>('/api/v1/tag/:id/post/:postId', async (request, reply) => {
         const { id, postId } = request.params
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
-
         const mod = await isTagMod(db, id, userId)
-
-        const hasPriv = await kernel.hasPriv(userId, PRIV_TAG_MOD)
+        const hasPriv = await kernel.hasPriv(userId, 'tag:mod')
 
         if (!mod && !hasPriv) {
             return reply.code(403).send({ error: 'Not a moderator of this tag' })
@@ -320,14 +277,10 @@ export function setupTagRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     server.put<{ Params: IdAndPostIdParams }>('/api/v1/tag/:id/post/:postId/pin', async (request, reply) => {
         const { id, postId } = request.params
-
         const userId = kernel.getUserIdFromRequest(request)
-
         const db = kernel.getDB()
-
         const mod = await isTagMod(db, id, userId)
-
-        const hasPriv = await kernel.hasPriv(userId, PRIV_TAG_MOD)
+        const hasPriv = await kernel.hasPriv(userId, 'tag:mod')
 
         if (!mod && !hasPriv) {
             return reply.code(403).send({ error: 'Not a moderator of this tag' })

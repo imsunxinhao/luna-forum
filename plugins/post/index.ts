@@ -14,11 +14,11 @@ const postPlugin: Plugin = {
     deps: [],
 
     async init(ctx) {
-        ctx.registerPriv('PRIV_POST_CREATE', String(PRIV_POST_CREATE), true)
-        ctx.registerPriv('PRIV_POST_EDIT', String(PRIV_POST_EDIT))
-        ctx.registerPriv('PRIV_POST_DELETE', String(PRIV_POST_DELETE), true)
-        ctx.registerPriv('PRIV_POST_VIEW', String(PRIV_POST_VIEW), true)
-        ctx.registerPriv('PRIV_VIEW_ALL_POST', String(PRIV_VIEW_ALL_POST))
+        ctx.registerPriv('view', ['guest', 'default'])
+        ctx.registerPriv('create', ['default'])
+        ctx.registerPriv('edit_own', ['default'])
+        ctx.registerPriv('delete_own', ['default'])
+        ctx.registerPriv('edit_all', ['superuser'])
 
         const db = ctx.kernel.getDB()
 

@@ -1,5 +1,5 @@
-import { FastifyInstance, FastifyRequest } from "fastify"
-import { Db } from "mongodb"
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { Db } from 'mongodb'
 
 export interface Plugin {
     name: string
@@ -14,7 +14,7 @@ export interface PluginContext {
     kernel: KernelAPI
     registerHook: (hook: string, handler: HookHandler) => Promise<void>
     registerCommand: (name: string, fn: CommandFn) => void
-    registerPriv: (name: string, bitExpression: string, isDefault?: boolean) => void
+    registerPriv: (name: string, defaultRoles?: string[]) => void
 }
 
 export interface KernelAPI {
@@ -26,8 +26,13 @@ export interface KernelAPI {
     registerPlugin: (plugin: Plugin) => Promise<void>
     getConfig: (key: string, defaultValue?: unknown) => unknown
     setConfig: (key: string, value: unknown) => Promise<void>
-    hasPriv: (userId: number, privBit: number) => Promise<boolean>
-    getPrivBit: (name: string) => number
+    hasPriv: (userId: number, permId: string) => Promise<boolean>
+    hasRole: (userId: number, roleName: string) => Promise<boolean>
+    createRole: (name: string, nickname: string) => Promise<string>
+    deleteRole: (roleId: string) => Promise<void>
+    setPerm: (roleId: string, permId: string, value: boolean) => Promise<void>
+    setUserRole: (userId: number, roleId: string) => Promise<void>
+    removeUserRole: (userId: number, roleId: string) => Promise<void>
     banUser: (userId: number) => Promise<void>
     unbanUser: (userId: number) => Promise<void>
 }
@@ -52,14 +57,9 @@ export interface PluginConfig {
 export interface User {
     uid: number
     username: string
-    priv: number
+    roles: string[]
     avatar?: string
     banned: boolean
-}
-
-export interface Group {
-    name: string
-    priv: number
 }
 
 export interface RegisterBody {
@@ -71,4 +71,10 @@ export interface RegisterBody {
 export interface LoginBody {
     username: string
     password: string
+}
+
+export interface Role {
+    name: string
+    nickname: string
+    perms: Record<string, boolean>
 }

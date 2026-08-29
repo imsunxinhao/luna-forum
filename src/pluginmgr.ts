@@ -22,7 +22,6 @@ class PluginManager {
 
     setServer(server: FastifyInstance) {
         this.server = server
-        return Promise.resolve()
     }
 
     initKernelAPI() {
@@ -35,10 +34,15 @@ class PluginManager {
             registerPlugin: (plugin) => this.register(plugin),
             getConfig: (key, defaultValue) => getDBConfigValue(key, defaultValue),
             setConfig: (key, value) => setDBConfig(key, value),
-            hasPriv: (userId, privBit) => privManager.hasPriv(userId, privBit),
-            getPrivBit: (name) => privManager.getBit(name),
-            banUser: async (userId) => { await privManager.banUser(userId) },
-            unbanUser: async (userId) => { await privManager.unbanUser(userId) }
+            hasPriv: (userId, permId) => privManager.hasPriv(userId, permId),
+            hasRole: (userId, roleName) => privManager.hasRole(userId, roleName),
+            createRole: (name, nickname) => privManager.createRole(name, nickname),
+            deleteRole: (roleId) => privManager.deleteRole(roleId),
+            setPerm: (roleId, permId, value) => privManager.setPerm(roleId, permId, value),
+            setUserRole: (userId, roleId) => privManager.setUserRole(userId, roleId),
+            removeUserRole: (userId, roleId) => privManager.removeUserRole(userId, roleId),
+            banUser: (userId) => privManager.banUser(userId),
+            unbanUser: (userId) => privManager.unbanUser(userId)
         }
         return this.kernelAPI
     }
@@ -56,9 +60,9 @@ class PluginManager {
 
         const ctx: PluginContext = {
             kernel: this.kernelAPI,
-            registerHook: async (hook, handler) => { await hookManager.register(hook, handler) },
+            registerHook: (hook, handler) => hookManager.register(hook, handler),
             registerCommand: (name, fn) => { this.commands.set(name, fn) },
-            registerPriv: (name, bitExpression, isDefault) => { privManager.register(name, bitExpression, isDefault) }
+            registerPriv: (name, defaultRoles) => privManager.registerPriv(`${plugin.name}:${name}`, defaultRoles)
         }
 
         await plugin.init(ctx)
@@ -68,58 +72,50 @@ class PluginManager {
 
     async activate(name: string) {
         const plugin = this.plugins.get(name)
-
         if (!plugin) throw new Error(`Plugin ${name} not found`)
-
         await plugin.activate()
     }
 
     async deactivate(name: string) {
         const plugin = this.plugins.get(name)
-
         if (!plugin) throw new Error(`Plugin ${name} not found`)
-
         await plugin.deactivate()
     }
 
     async executeCommand(name: string, ...args: unknown[]) {
         const cmd = this.commands.get(name)
-
         if (!cmd) throw new Error(`Command ${name} not found`)
-
         return cmd(...args)
     }
 
     async loadPlugin(manifest: PluginManifest) {
-        // 通过文件存在性检查寻找实际的入口文件（index.js / index.ts）
-        const tryPaths = this.pluginEntries.map(e => nodePath.join(import.meta.dirname, '../', manifest.main, e));
+        const tryPaths = this.pluginEntries.map(e => nodePath.join(import.meta.dirname, '../', manifest.main, e))
 
-        let path = '';
+        let path = ''
         for (const element of tryPaths) {
             try {
-                await promises.access(element, promises.constants.F_OK);
-                path = element;
+                await promises.access(element, promises.constants.F_OK)
+                path = element
+                break
             } catch { }
         }
 
         if (!path) {
-            throw new Error(`Plugin entry file not found: ${manifest.main}`);
+            throw new Error(`Plugin entry file not found: ${manifest.main}`)
         }
 
-        const mod = await import(pathToFileURL(path).href);
-
-        const plugin = mod.default || mod;
-        
-        await this.register(plugin);
+        const mod = await import(pathToFileURL(path).href)
+        const plugin = mod.default || mod
+        await this.register(plugin)
     }
 
     getPlugin(name: string): Plugin | undefined {
         return this.plugins.get(name)
     }
 
-    /** 返回所有已注册插件的名称列表 */
     getPluginNames(): string[] {
         return Array.from(this.plugins.keys())
     }
 }
+
 export const pluginManager = new PluginManager()

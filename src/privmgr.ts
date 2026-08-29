@@ -1,198 +1,152 @@
 import { getDB } from './db.js'
+import { ObjectId } from 'mongodb'
 
 class PrivManager {
-    private privMap: Map<string, number> = new Map()
-    private defaultBits: number[] = []
-
-    register(name: string, bitExpression?: string, isDefault: boolean = false): void {
-        if (this.privMap.has(name)) {
-            throw new Error(`Priv ${name} already registered`)
-        }
-
-        let bit: number
-        if (bitExpression) {
-            bit = this.evaluateExpression(bitExpression)
-        } else {
-            bit = this.privMap.size
-        }
-
-        this.privMap.set(name, bit)
-
-        if (isDefault) {
-            this.defaultBits.push(bit)
-        }
+    private get db() {
+        return getDB()
     }
 
-    getDefaultPriv(): string {
-        let priv = 0n
-        for (const bit of this.defaultBits) {
-            priv |= 1n << BigInt(bit)
-        }
-        return priv.toString()
+    private privMap: Map<string, string[]> = new Map()
+
+    registerPriv(permId: string, defaultRoles: string[] = []): void {
+        this.privMap.set(permId, defaultRoles)
     }
 
-    private evaluateExpression(expression: string): number {
-        const tokens = expression.trim().split(/\s+/)
-
-        if (tokens.length === 1) {
-            return parseInt(tokens[0])
-        }
-
-        let result = BigInt(this.parseToken(tokens[0]))
-
-        for (let i = 1; i < tokens.length; i += 2) {
-            const operator = tokens[i]
-            const operand = BigInt(this.parseToken(tokens[i + 1]))
-
-            switch (operator) {
-                case '<<':
-                    result = result << operand
-                    break
-                case '>>':
-                    result = result >> operand
-                    break
-                case '|':
-                    result = result | operand
-                    break
-                case '&':
-                    result = result & operand
-                    break
-                case '^':
-                    result = result ^ operand
-                    break
-                default:
-                    throw new Error(`Unknown operator: ${operator}`)
-            }
-        }
-
-        return Number(result)
+    getPrivs(): Map<string, string[]> {
+        return this.privMap
     }
 
-    private parseToken(token: string): number {
-        if (/^\d+$/.test(token)) {
-            return parseInt(token)
-        }
-
-        if (this.privMap.has(token)) {
-            return this.privMap.get(token)!
-        }
-
-        throw new Error(`Unknown token: ${token}`)
+    async hasRole(userId: number, roleName: string): Promise<boolean> {
+        const user = await this.db.collection('users').findOne({ uid: userId })
+        if (!user) return false
+        const role = await this.db.collection('roles').findOne({ name: roleName })
+        if (!role) return false
+        const roleIds = user.roles ?? []
+        return roleIds.some((id: string) => id === role._id.toString())
     }
 
-    getBit(name: string): number {
-        const bit = this.privMap.get(name)
-        if (bit === undefined) {
-            throw new Error(`Priv ${name} not found`)
-        }
-        return bit
-    }
-
-    async hasPriv(userId: number, privBit: number): Promise<boolean> {
-        const db = getDB()
-        const user = await db.collection('users').findOne({ uid: userId })
-
+    async hasPriv(userId: number, permId: string): Promise<boolean> {
+        const user = await this.db.collection('users').findOne({ uid: userId })
         if (!user) return false
         if (user.banned) return false
-
-        const privStr = String(user.priv)
-        if (privStr === '-1') return true
-
-        const privBig = BigInt(privStr)
-        const privValue = 1n << BigInt(privBit)
-        return (privBig & privValue) === privValue
+        const roleIds = user.roles ?? []
+        if (roleIds.length === 0) return false
+        const roles = await this.db.collection('roles').find({
+            _id: { $in: roleIds.map((id: string) => new ObjectId(id)) }
+        }).toArray()
+        for (const role of roles) {
+            if (role.name === 'superuser') return true
+            if (role.perms && role.perms[permId] === true) return true
+        }
+        return false
     }
 
-    async getUserPriv(userId: number): Promise<string> {
-        const db = getDB()
-        const user = await db.collection('users').findOne({ uid: userId })
-        if (!user) return '0'
-        if (user.banned) return '0'
-        return String(user.priv)
+    async createRole(name: string, nickname: string): Promise<string> {
+        const existing = await this.db.collection('roles').findOne({ name })
+        if (existing) throw new Error(`Role ${name} already exists`)
+        const result = await this.db.collection('roles').insertOne({
+            name,
+            nickname,
+            perms: {}
+        })
+        return result.insertedId.toString()
     }
 
-    async setUserPriv(userId: number, priv: string) {
-        const db = getDB()
-        await db.collection('users').updateOne(
-            { uid: userId },
-            { $set: { priv, updatedAt: new Date() } }
-        )
-        return priv
-    }
-
-    async addUserPriv(userId: number, privBit: number) {
-        const db = getDB()
-        const user = await db.collection('users').findOne({ uid: userId })
-        if (!user) throw new Error('User not found')
-
-        const privStr = String(user.priv)
-        if (privStr === '-1') return
-
-        const privBig = BigInt(privStr)
-        const privValue = 1n << BigInt(privBit)
-        const newPriv = (privBig | privValue).toString()
-        await db.collection('users').updateOne(
-            { uid: userId },
-            { $set: { priv: newPriv, updatedAt: new Date() } }
-        )
-        return newPriv
-    }
-
-    async removeUserPriv(userId: number, privBit: number) {
-        const db = getDB()
-        const user = await db.collection('users').findOne({ uid: userId })
-        if (!user) throw new Error('User not found')
-
-        const privStr = String(user.priv)
-        if (privStr === '-1') return
-
-        const privBig = BigInt(privStr)
-        const privValue = 1n << BigInt(privBit)
-        const newPriv = (privBig & ~privValue).toString()
-        await db.collection('users').updateOne(
-            { uid: userId },
-            { $set: { priv: newPriv, updatedAt: new Date() } }
+    async deleteRole(roleId: string): Promise<void> {
+        await this.db.collection('roles').deleteOne({ _id: new ObjectId(roleId) })
+        await this.db.collection('users').updateMany(
+            { roles: roleId },
+            { $pull: { roles: roleId } as never }
         )
     }
 
-    async banUser(userId: number) {
-        const db = getDB()
+    async setPerm(roleId: string, permId: string, value: boolean): Promise<void> {
+        await this.db.collection('roles').updateOne(
+            { _id: new ObjectId(roleId) },
+            { $set: { [`perms.${permId}`]: value } }
+        )
+    }
+
+    async setUserRole(userId: number, roleId: string): Promise<void> {
+        await this.db.collection('users').updateOne(
+            { uid: userId },
+            { $addToSet: { roles: roleId } as never }
+        )
+    }
+
+    async removeUserRole(userId: number, roleId: string): Promise<void> {
+        await this.db.collection('users').updateOne(
+            { uid: userId },
+            { $pull: { roles: roleId } as never }
+        )
+    }
+
+    async applyDefaultPerms(): Promise<void> {
+        for (const [permId, roles] of this.privMap) {
+            for (const roleName of roles) {
+                const role = await this.db.collection('roles').findOne({ name: roleName })
+                if (role) {
+                    await this.db.collection('roles').updateOne(
+                        { _id: role._id },
+                        { $set: { [`perms.${permId}`]: true } }
+                    )
+                }
+            }
+        }
+    }
+
+    async initDefaultRoles(): Promise<void> {
+        const guestRole = await this.db.collection('roles').findOne({ name: 'guest' })
+        if (!guestRole) {
+            await this.db.collection('roles').insertOne({
+                name: 'guest',
+                nickname: '游客',
+                perms: {}
+            })
+        }
+        const defaultRole = await this.db.collection('roles').findOne({ name: 'default' })
+        if (!defaultRole) {
+            await this.db.collection('roles').insertOne({
+                name: 'default',
+                nickname: '默认',
+                perms: {}
+            })
+        }
+        const superuserRole = await this.db.collection('roles').findOne({ name: 'superuser' })
+        if (!superuserRole) {
+            await this.db.collection('roles').insertOne({
+                name: 'superuser',
+                nickname: '超级管理员',
+                perms: {}
+            })
+        }
+    }
+
+    async initGuestUser(): Promise<void> {
+        const guest = await this.db.collection('users').findOne({ uid: 0 })
+        if (!guest) {
+            await this.db.collection('users').insertOne({
+                uid: 0,
+                username: 'guest',
+                roles: [],
+                banned: false,
+                createdAt: new Date()
+            })
+        }
+    }
+    async banUser(userId: number): Promise<void> {
         if (userId === 0) throw new Error('Cannot ban guest user')
-
-        await db.collection('users').updateOne(
+        await this.db.collection('users').updateOne(
             { uid: userId },
             { $set: { banned: true, bannedAt: new Date() } }
         )
     }
 
     async unbanUser(userId: number): Promise<void> {
-        const db = getDB()
-        await db.collection('users').updateOne(
+        await this.db.collection('users').updateOne(
             { uid: userId },
             { $set: { banned: false, unbannedAt: new Date() }, $unset: { bannedAt: '' } }
         )
-    }
-
-    async isBanned(userId: number): Promise<boolean> {
-        const db = getDB()
-        const user = await db.collection('users').findOne({ uid: userId })
-        return user ? user.banned === true : false
-    }
-
-    async initGuestUser() {
-        const db = getDB()
-        const guestUser = await db.collection('users').findOne({ uid: 0 })
-        if (!guestUser) {
-            await db.collection('users').insertOne({
-                uid: 0,
-                username: 'guest',
-                email: 'guest@forum.local',
-                priv: '0',
-                banned: false,
-                createdAt: new Date()
-            })
-        }
-        return await db.collection('users').findOne({ uid: 0 });
     }
 }
 

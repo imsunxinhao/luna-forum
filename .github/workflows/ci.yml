@@ -10,14 +10,22 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true   # 同一分支新提交会取消旧的检查
+  cancel-in-progress: true
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,8 +33,21 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
-        run: pnpm i
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run linter
         run: pnpm run lint
@@ -34,9 +55,10 @@ jobs:
       - name: Build site
         run: pnpm run build
 
-      - name: Upload build artifact (for preview)
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: pr-preview-${{ github.event.number }}
           path: ./dist
           retention-days: 7
+          if-no-files-found: error

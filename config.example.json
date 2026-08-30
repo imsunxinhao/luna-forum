@@ -25,11 +25,6 @@
             ]
         },
         {
-            "name": "home",
-            "main": "./plugins/home/index.ts",
-            "deps": []
-        },
-        {
             "name": "frontend",
             "main": "./plugins/frontend/index.ts",
             "deps": []

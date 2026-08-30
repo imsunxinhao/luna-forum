@@ -70,7 +70,7 @@ export async function renderPage(
         user,
         bundlePath: '/static/dist/bundle.js',
         stylePath: '/static/dist/bundle.css',
-        hasPriv: (privBit: number) => privManager.hasPriv(userId, privBit)
+        hasPriv: (permId: string) => privManager.hasPriv(userId, permId)
     };
     if (!merged.title) {
         merged.title = site.name;

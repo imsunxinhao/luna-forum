@@ -3,7 +3,7 @@ import { pluginManager } from './pluginmgr.js'
 import { hookManager } from './hookmgr.js'
 import { loadConfig, loadDBConfig, getSessionSecret } from './config.js'
 import { privManager } from './privmgr.js'
-import { registerAuthPrivs, initGuestPriv, setupAuthRoutes, setJWTSecret } from './auth.js'
+import { registerAuthPrivs, setupAuthRoutes, setJWTSecret } from './auth.js'
 import Fastify, { FastifyInstance } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { fastifyCookie } from '@fastify/cookie'
@@ -23,11 +23,9 @@ export class Kernel {
 
         await connect(config.mongodb.uri, config.mongodb.dbName || 'forum')
 
-        await privManager.initGuestUser()
-
         registerAuthPrivs()
 
-        await initGuestPriv()
+        await privManager.initGuestUser()
 
         await loadDBConfig()
 

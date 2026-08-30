@@ -4,8 +4,8 @@
 <div class="lf-card-center-wrapper">
     <div class="lf-card lf-card-center">
         <div class="lf-card-header">
-            <div class="lf-card-title">在 {{ site.name }} 上注册</div>
-            <div class="lf-card-subtitle">欢迎您加入 {{ site.name }}！已有帐户？<fluent-link href="/login">立即登录！</fluent-link></div>
+            <div class="lf-card-title">{{ 'auth.registerTitle' | _({ name: site.name }) }}</div>
+            <div class="lf-card-subtitle">{{ 'auth.registerSubtitle' | _({ name: site.name }) }}<fluent-link href="/login">{{ 'auth.loginNow' | _ }}</fluent-link></div>
             {% if error %}
             <fluent-message-bar intent="error">
                 <span slot="icon" style="color: #B10E1C">
@@ -28,21 +28,21 @@
         <div class="lf-card-content">
             <form method="POST" action="/api/v1/register" class="lf-form">
                 <fluent-text-input type="email" name="email" class="lf-card-input" autofocus required>
-                    <fluent-label weight="regular" size="medium" required>电子邮件</fluent-label>
+                    <fluent-label weight="regular" size="medium" required>{{ 'auth.email' | _ }}</fluent-label>
                 </fluent-text-input>
                 <fluent-text-input type="text" name="username" class="lf-card-input" required>
-                    <fluent-label weight="regular" size="medium" required>用户名</fluent-label>
+                    <fluent-label weight="regular" size="medium" required>{{ 'auth.username' | _ }}</fluent-label>
                 </fluent-text-input>
                 <fluent-text-input type="password" name="password" class="lf-card-input" required>
-                    <fluent-label weight="regular" size="medium" required>密码</fluent-label>
+                    <fluent-label weight="regular" size="medium" required>{{ 'auth.password' | _ }}</fluent-label>
                 </fluent-text-input>
                 <fluent-field label-position="after">
-                    <fluent-label slot="label" class="lf-agreement-link" required>我同意<fluent-link
-                            href="#">用户协议</fluent-link>和<fluent-link href="#">隐私保护协议</fluent-link></fluent-label>
+                    <fluent-label slot="label" class="lf-agreement-link" required>{{ 'auth.agreePrefix' | _ }}<fluent-link
+                            href="#">{{ 'auth.terms' | _ }}</fluent-link>{{ 'auth.and' | _ }}<fluent-link href="#">{{ 'auth.privacy' | _ }}</fluent-link></fluent-label>
                     <fluent-checkbox slot="input" aria-required="true"
                         onchange="document.getElementById('lf-register-btn').disabled = !this.checked"></fluent-checkbox>
                 </fluent-field>
-                <fluent-button appearance="primary" type="submit" id="lf-register-btn" disabled>注册</fluent-button>
+                <fluent-button appearance="primary" type="submit" id="lf-register-btn" disabled>{{ 'auth.register' | _ }}</fluent-button>
             </form>
         </div>
     </div>

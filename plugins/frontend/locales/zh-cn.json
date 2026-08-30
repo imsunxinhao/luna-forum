@@ -1,0 +1,33 @@
+{
+  "layout": {
+    "home": "首页",
+    "logout": "登出",
+    "notLoggedIn": "未登录",
+    "loginLink": "点此登录",
+    "toggleMenu": "切换菜单"
+  },
+  "auth": {
+    "loginTitle": "登录到 {{name}}",
+    "noAccount": "什么？没有帐户？",
+    "registerOne": "注册一个！",
+    "registerTitle": "在 {{name}} 上注册",
+    "registerSubtitle": "欢迎您加入 {{name}}！已有帐户？",
+    "loginNow": "立即登录！",
+    "username": "用户名",
+    "password": "密码",
+    "email": "电子邮件",
+    "agreePrefix": "我同意",
+    "terms": "用户协议",
+    "and": "和",
+    "privacy": "隐私保护协议",
+    "login": "登录",
+    "register": "注册"
+  },
+  "post": {
+    "actions": "帖子操作",
+    "menuItem1": "菜单项 1",
+    "menuItem2": "菜单项 2",
+    "menuItem3": "菜单项 3",
+    "menuItem4": "菜单项 4"
+  }
+}

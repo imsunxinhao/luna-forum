@@ -2,7 +2,7 @@ import nunjucks from 'nunjucks';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { RenderData } from './types.js';
-import { t } from './i18n.js';
+import { t, setLocale, detectLocale, getLocale } from './i18n.js';
 import { getConfig } from '../../src/config.js';
 import { getCurrentUser, getUserIdFromRequest } from '../../src/auth.js';
 import type { FastifyRequest } from 'fastify';
@@ -36,7 +36,7 @@ export function addTemplatePath(path: string): void {
     }
 }
 
-env.addFilter('_', (key: string) => t(key));
+env.addFilter('_', (key: string, options?: Record<string, unknown>) => t(key, options));
 
 env.addFilter('markdown', (content: string) => {
   return renderMarkdown(content);
@@ -61,13 +61,16 @@ export async function renderPage(
     const site = getSiteInfo();
     let user: Record<string, unknown> | null = null, userId = 0;
     if (currentRequest) {
-        user = await getCurrentUser(currentRequest as FastifyRequest);
-        userId = getUserIdFromRequest(currentRequest as FastifyRequest);
+        const request = currentRequest as FastifyRequest;
+        user = await getCurrentUser(request);
+        userId = getUserIdFromRequest(request);
+        setLocale(detectLocale(request.headers));
     }
     const merged: Record<string, unknown> = {
         ...data,
         site,
         user,
+        lang: getLocale(),
         bundlePath: '/static/dist/bundle.js',
         stylePath: '/static/dist/bundle.css',
         hasPriv: (permId: string) => privManager.hasPriv(userId, permId)

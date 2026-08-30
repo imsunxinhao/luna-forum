@@ -1,0 +1,33 @@
+{
+  "layout": {
+    "home": "Home",
+    "logout": "Log out",
+    "notLoggedIn": "Not logged in",
+    "loginLink": "Log in",
+    "toggleMenu": "Toggle menu"
+  },
+  "auth": {
+    "loginTitle": "Log in to {{name}}",
+    "noAccount": "No account yet?",
+    "registerOne": "Register one!",
+    "registerTitle": "Register on {{name}}",
+    "registerSubtitle": "Welcome to {{name}}! Already have an account?",
+    "loginNow": "Log in now!",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "agreePrefix": "I agree to the",
+    "terms": "Terms of Service",
+    "and": "and",
+    "privacy": "Privacy Policy",
+    "login": "Log in",
+    "register": "Register"
+  },
+  "post": {
+    "actions": "Post actions",
+    "menuItem1": "Menu item 1",
+    "menuItem2": "Menu item 2",
+    "menuItem3": "Menu item 3",
+    "menuItem4": "Menu item 4"
+  }
+}

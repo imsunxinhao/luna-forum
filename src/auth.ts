@@ -184,3 +184,8 @@ export function setupAuthRoutes(server: FastifyInstance): void {
         return { success: true }
     })
 }
+
+export function registerAuthPrivs(): void {
+    privManager.registerPriv('auth:register', ['guest'])
+    privManager.registerPriv('auth:login', ['default', 'superuser'])
+}

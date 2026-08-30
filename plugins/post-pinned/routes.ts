@@ -3,16 +3,12 @@ import { KernelAPI } from '../../src/types.js'
 import { FastifyInstance } from 'fastify'
 import { IdParams } from './types.js'
 
-const POST_PINNED_MAGIC = 100
-const PRIV_POST_PIN = POST_PINNED_MAGIC + 0
-const PRIV_POST_UNPIN = POST_PINNED_MAGIC + 1
-
 export function setupPostPinnedRoutes(server: FastifyInstance, kernel: KernelAPI): void {
     server.put<{ Params: IdParams }>('/api/v1/post/:id/pin', async (request, reply) => {
         const { id } = request.params
         const userId = kernel.getUserIdFromRequest(request)
         const db = kernel.getDB()
-        const canPin = await kernel.hasPriv(userId, PRIV_POST_PIN)
+        const canPin = await kernel.hasPriv(userId, 'post-pinned:pin')
         if (!canPin) {
             return reply.code(403).send({ success: false, error: 'No permission to pin post' })
         }
@@ -29,7 +25,7 @@ export function setupPostPinnedRoutes(server: FastifyInstance, kernel: KernelAPI
         const { id } = request.params
         const userId = kernel.getUserIdFromRequest(request)
         const db = kernel.getDB()
-        const canUnpin = await kernel.hasPriv(userId, PRIV_POST_UNPIN)
+        const canUnpin = await kernel.hasPriv(userId, 'post-pinned:unpin')
         if (!canUnpin) {
             return reply.code(403).send({ success: false, error: 'No permission to unpin post' })
         }

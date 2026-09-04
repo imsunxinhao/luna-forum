@@ -21,20 +21,20 @@
     <div class="lf-post lf-post-sidebar">
         <fluent-menu>
             <fluent-menu-button slot="trigger" appearance="primary" tabindex="0" aria-haspopup="true" aria-expanded="false">
-                帖子操作
+                {{ 'post.actions' | _ }}
             </fluent-menu-button>
             <fluent-menu-list focusgroup="menu" popover >
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 1
+                {{ 'post.menuItem1' | _ }}
                 </fluent-menu-item>
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 2
+                {{ 'post.menuItem2' | _ }}
                 </fluent-menu-item>
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 3
+                {{ 'post.menuItem3' | _ }}
                 </fluent-menu-item>
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 4
+                {{ 'post.menuItem4' | _ }}
                 </fluent-menu-item>
             </fluent-menu-list>
         </fluent-menu>

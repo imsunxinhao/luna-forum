@@ -4,8 +4,8 @@
 <div class="lf-card-center-wrapper">
     <div class="lf-card lf-card-center">
         <div class="lf-card-header">
-            <div class="lf-card-title">登录到 {{ site.name }}</div>
-            <div class="lf-card-subtitle">什么？没有帐户？<fluent-link href="/register">注册一个！</fluent-link></div>
+            <div class="lf-card-title">{{ 'auth.loginTitle' | _({ name: site.name }) }}</div>
+            <div class="lf-card-subtitle">{{ 'auth.noAccount' | _ }}<fluent-link href="/register">{{ 'auth.registerOne' | _ }}</fluent-link></div>
             {% if error %}
             <fluent-message-bar intent="error">
                 <span slot="icon" style="color: #B10E1C">
@@ -27,13 +27,13 @@
         </div>
         <div class="lf-card-content">
             <form method="POST" action="/api/v1/login" class="lf-form">
-                <fluent-text-input type="text" name="username" class="lf-card-input" autofocus required>用户名</fluent-text-input>
-                <fluent-text-input type="password" name="password" class="lf-card-input" required>密码</fluent-text-input>
+                <fluent-text-input type="text" name="username" class="lf-card-input" autofocus required>{{ 'auth.username' | _ }}</fluent-text-input>
+                <fluent-text-input type="password" name="password" class="lf-card-input" required>{{ 'auth.password' | _ }}</fluent-text-input>
                 <fluent-field label-position="after">
-                    <label slot="label" class="lf-agreement-link">我同意<fluent-link href="#">用户协议</fluent-link>和<fluent-link href="#">隐私保护协议</fluent-link></label>
+                    <label slot="label" class="lf-agreement-link">{{ 'auth.agreePrefix' | _ }}<fluent-link href="#">{{ 'auth.terms' | _ }}</fluent-link>{{ 'auth.and' | _ }}<fluent-link href="#">{{ 'auth.privacy' | _ }}</fluent-link></label>
                     <fluent-checkbox slot="input" aria-required="true" onchange="document.getElementById('login-btn').disabled = !this.checked"></fluent-checkbox>
                 </fluent-field>
-                <fluent-button appearance="primary" type="submit" id="login-btn" disabled>登录</fluent-button>
+                <fluent-button appearance="primary" type="submit" id="login-btn" disabled>{{ 'auth.login' | _ }}</fluent-button>
             </form>
         </div>
     </div>

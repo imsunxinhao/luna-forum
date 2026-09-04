@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Luna Forum">
-<html lang="zh-cn">
+<html lang="{{ lang }}">
 
 <head>
     <title>{% block title %}{{ site.name }} - {{ pagename }}{% endblock %}</title>
@@ -22,9 +22,9 @@
             </button>
         </div>
         <nav class="lf-nav">
-            <div class="lf-nav-item" data-title="首页">
+            <div class="lf-nav-item" data-title="{{ 'layout.home' | _ }}">
                 <span class="lf-nav-icon"><iconify-icon icon="fluent:home-24-regular"></iconify-icon></span>
-                <span class="lf-nav-label">首页</span>
+                <span class="lf-nav-label">{{ 'layout.home' | _ }}</span>
             </div>
         </nav>
         <div class="lf-footer">
@@ -35,20 +35,20 @@
                     <div class="lf-user-row">
                         <div class="lf-user-name">{{ user.username }}</div>
                         <fluent-menu style="--menu-max-height: auto;">
-                            <fluent-menu-button aria-label="Toggle Menu" appearance="transparent" slot="trigger"
+                            <fluent-menu-button aria-label="{{ 'layout.toggleMenu' | _ }}" appearance="transparent" slot="trigger"
                                 tabindex="0" aria-haspopup="true" aria-expanded="false" shape="circular">
                             </fluent-menu-button>
                             <fluent-menu-list focusgroup="menu" popover>
                                     <form method="post" action="/api/v1/logout"></form>
                                     <fluent-menu-item tabindex="0" role="menuitem" type="submit" onclick="this.previousElementSibling.submit()">
                                         <iconify-icon icon="fluent:sign-out-24-filled"></iconify-icon>
-                                        登出
+                                        {{ 'layout.logout' | _ }}
                                     </fluent-menu-item>
                         </fluent-menu>
                     </div>
                     {% else %}
-                    <div class="lf-user-name">未登录</div>
-                    <div class="lf-user-role"><fluent-link href="/login" tabindex="0">点此登录</fluent-link></div>
+                    <div class="lf-user-name">{{ 'layout.notLoggedIn' | _ }}</div>
+                    <div class="lf-user-role"><fluent-link href="/login" tabindex="0">{{ 'layout.loginLink' | _ }}</fluent-link></div>
                     {% endif %}
                 </div>
             </div>

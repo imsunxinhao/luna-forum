@@ -3,41 +3,85 @@
 {% block page_content %}
 <div class="lf-section lf-section-7-3">
     <div class="lf-post lf-post-main">
-        <h1 class="lf-post-title">{{ post_doc.title }}</h1>
-        <div class="lf-avatar-wrapper">
-            <fluent-avatar
-                size="small"
-            >
-                {% if author.avatar %}
-                <img role="presentation" aria-hidden="true" src="{{ author.avatar }}" />
-                {% endif %}
-            </fluent-avatar>
-            <span class="lf-username">{{ author.username }}</span>
-        </div>
-        <div class="lf-post-content">
-            {{ post_doc.content | markdown | safe }}
+        <div class="lf-post-layout">
+            <h1 class="lf-post-title">{{ post_doc.title }}</h1>
+            <div class="lf-post-body">
+                <div class="lf-avatar-wrapper">
+                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if author.avatar %}
+                        src="{{ author.avatar }}" {% else %} initials="{{ author.username[0]|upper if author else '' }}"
+                        {% endif %}></fluent-avatar>
+                </div>
+                <div class="lf-post-content-wrapper">
+                    <div class="lf-post-meta">
+                        <span class="lf-username">{{ author.username }}</span>
+                        <div class="lf-meta-info">
+                            <span class="lf-time">{{ post_doc.createdAt | timeago }}</span>
+                            {% if post_doc.editedAt %}
+                            <span class="lf-edited">{{ 'post.edited' | _ }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="lf-post-content">
+                        {{ post_doc.content | markdown | safe }}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="lf-post lf-post-sidebar">
         <fluent-menu>
-            <fluent-menu-button slot="trigger" appearance="primary" tabindex="0" aria-haspopup="true" aria-expanded="false">
-                帖子操作
+            <fluent-menu-button slot="trigger" appearance="primary" tabindex="0" aria-haspopup="true"
+                aria-expanded="false">
+                {{ 'post.actions' | _ }}
             </fluent-menu-button>
-            <fluent-menu-list focusgroup="menu" popover >
+            <fluent-menu-list focusgroup="menu" popover>
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 1
+                    {{ 'post.menuItem1' | _ }}
                 </fluent-menu-item>
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 2
+                    {{ 'post.menuItem2' | _ }}
                 </fluent-menu-item>
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 3
+                    {{ 'post.menuItem3' | _ }}
                 </fluent-menu-item>
                 <fluent-menu-item tabindex="0" role="menuitem">
-                Menu item 4
+                    {{ 'post.menuItem4' | _ }}
                 </fluent-menu-item>
             </fluent-menu-list>
         </fluent-menu>
     </div>
+</div>
+
+<div class="lf-section">
+    <h2 class="lf-post-title lf-comments-title">{{ 'post.comments' | _ }} ({{ comments|length }})</h2>
+    {% for comment in comments %}
+    <div class="lf-post lf-post-main lf-comment" id="comment-{{ comment.id }}">
+        <div class="lf-post-body">
+            <div class="lf-avatar-wrapper">
+                <fluent-avatar data-color="neutral" class="lf-avatar" {% if comment.author.avatar %}
+                    src="{{ comment.author.avatar }}" {% else %} initials="{{ comment.author.username[0]|upper }}"
+                    {% endif %}></fluent-avatar>
+            </div>
+            <div class="lf-post-content-wrapper">
+                <div class="lf-post-meta">
+                    <span class="lf-username">{{ comment.author.username }}</span>
+                    <div class="lf-meta-info">
+                        <span class="lf-time">{{ comment.createdAt | timeago }}</span>
+                        {% if comment.editedAt %}
+                        <span class="lf-edited">{{ 'post.edited' | _ }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="lf-post-content">
+                    {{ comment.content | markdown | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="lf-post lf-post-main lf-no-comments">
+        <div class="lf-post-content">{{ 'post.noComments' | _ }}</div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

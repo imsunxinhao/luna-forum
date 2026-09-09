@@ -2,7 +2,7 @@ import nunjucks from 'nunjucks';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { RenderData } from './types.js';
-import { t } from './i18n.js';
+import { t, detectLocale, setLocale, getLocale } from './i18n.js';
 import { getConfig } from '../../src/config.js';
 import { getCurrentUser, getUserIdFromRequest } from '../../src/auth.js';
 import type { FastifyRequest } from 'fastify';
@@ -36,10 +36,37 @@ export function addTemplatePath(path: string): void {
     }
 }
 
-env.addFilter('_', (key: string) => t(key));
+env.addFilter('_', (key: string, options?: Record<string, unknown>) => t(key));
 
 env.addFilter('markdown', (content: string) => {
   return renderMarkdown(content);
+});
+
+env.addFilter('timeago', (date: unknown) => {
+    if (!date) return '';
+    const d = date instanceof Date ? date : new Date(date as string);
+    if (isNaN(d.getTime())) return '';
+    const diff = Date.now() - d.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    if (days > 365) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+    if (days > 90) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+    if (days > 0) return t('time.daysAgo', { count: days });
+    if (hours > 0) return t('time.hoursAgo', { count: hours });
+    if (minutes > 0) return t('time.minutesAgo', { count: minutes });
+    return t('time.justNow');
 });
 
 function getSiteInfo(): Record<string, string> {
@@ -61,13 +88,16 @@ export async function renderPage(
     const site = getSiteInfo();
     let user: Record<string, unknown> | null = null, userId = 0;
     if (currentRequest) {
-        user = await getCurrentUser(currentRequest as FastifyRequest);
-        userId = getUserIdFromRequest(currentRequest as FastifyRequest);
+        const request = currentRequest as FastifyRequest;
+        user = await getCurrentUser(request);
+        userId = getUserIdFromRequest(request);
+        setLocale(detectLocale(request.headers));
     }
     const merged: Record<string, unknown> = {
         ...data,
         site,
         user,
+        lang: getLocale(),
         bundlePath: '/static/dist/bundle.js',
         stylePath: '/static/dist/bundle.css',
         hasPriv: (permId: string) => privManager.hasPriv(userId, permId)

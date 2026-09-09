@@ -24,9 +24,13 @@ export class Kernel {
         await connect(config.mongodb.uri, config.mongodb.dbName || 'forum')
 
         registerAuthPrivs()
+        
+        await privManager.initDefaultRoles();
 
         await privManager.initGuestUser()
 
+        await privManager.applyDefaultPerms(); 
+        
         await loadDBConfig()
 
         const isDev = process.env.NODE_ENV !== 'production'

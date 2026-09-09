@@ -40,6 +40,11 @@
     font-size: 13px;
     color: var(--lf-ts);
     margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.lf-card-subtitle + fluent-message-bar {
+    margin-top: 5px;
 }
 
 .lf-card-content {
@@ -82,27 +87,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
     height: 100%;
-    top: 0;
-
-    width: 100%;
     min-height: 100%;
-}
-
-.lf-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-}
-
-.lf-form fluent-text-input {
-    width: 100%;
-}
-
-.lf-form fluent-button {
-    width: 100%;
-    margin-top: 8px;
 }
 
 .lf-card-center {
@@ -126,13 +113,20 @@
     width: 100%;
 }
 
-.lf-card-center-wrapper {
+.lf-form {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
     width: 100%;
-    height: 100%;
-    min-height: 100%;
+}
+
+.lf-form fluent-text-input {
+    width: 100%;
+}
+
+.lf-form fluent-button {
+    width: 100%;
+    margin-top: 8px;
 }
 
 .lf-agreement-link {
@@ -184,10 +178,71 @@ fluent-menu-item iconify-icon {
     flex-shrink: 0;
 }
 
+fluent-menu-list[popover] {
+    animation: lf-menu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes lf-menu-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+fluent-message-bar {
+    display: flex;
+    align-items: center;
+    max-height: 40px;
+    padding: 8px 12px;
+}
+
+fluent-message-bar::part(root) {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+fluent-message-bar::part(content) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+fluent-message-bar span[slot="icon"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+fluent-message-bar span[slot="icon"] svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.lf-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .lf-section {
     display: grid;
     gap: 16px;
     width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     margin-bottom: 16px;
 }
 
@@ -224,7 +279,6 @@ fluent-menu-item iconify-icon {
 }
 
 @media (max-width: 768px) {
-
     .lf-section-3-7,
     .lf-section-7-3,
     .lf-section-5-5,
@@ -237,89 +291,94 @@ fluent-menu-item iconify-icon {
     }
 }
 
-fluent-message-bar {
-    display: flex;
-    align-items: center;
-    max-height: 20px;
-    padding: 8px 12px;
-}
-
-fluent-message-bar::part(root) {
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-fluent-message-bar::part(content) {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-fluent-message-bar span[slot="icon"] {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin: 0;
-}
-
-fluent-message-bar span[slot="icon"] svg {
-    width: 20px;
-    height: 20px;
+.lf-post-main {
     display: block;
-}
-
-.lf-card-subtitle {
-    font-size: 13px;
-    color: var(--lf-ts);
-    margin-top: 2px;
-    margin-bottom: 2px;
-}
-
-.lf-card-subtitle+fluent-message-bar {
-    margin-top: 5px;
-}
-
-.twemoji {
-    width: 2.4em;
-    height: 2.4em;
-    vertical-align: -0.2em;
-    display: inline-block;
-}
-
-.twemoji svg {
     width: 100%;
-    height: 100%;
+}
+
+.lf-post-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
 }
 
 .lf-post-title {
-    font-size: 48px !important;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+    color: var(--lf-t);
+    text-align: left;
+    width: 100%;
+}
+
+.lf-post-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    flex: 1;
+    min-width: 0;
 }
 
 .lf-avatar-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-shrink: 0;
+    display: block;
 }
 
 .lf-avatar-wrapper fluent-avatar {
-    display: inline-flex;
+    display: block;
+    width: 48px;
+    height: 48px;
 }
 
-.lf-avatar-wrapper .lf-username {
-    line-height: 1;
+.lf-avatar-wrapper fluent-avatar::part(root) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lf-post-content-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.lf-post-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.lf-username {
+    font-weight: bold;
+    font-size: 15px;
+    color: var(--lf-t);
+    line-height: 1.2;
     white-space: nowrap;
-    margin-top: 4px;
-    margin-bottom: 4px;
+}
+
+.lf-meta-info {
+    display: flex;
+    gap: 8px;
+}
+
+.lf-time,
+.lf-edited {
+    font-size: 13px;
+    color: var(--lf-ts);
 }
 
 .lf-post-content {
-    line-height: 1.7;
     font-size: 15px;
+    line-height: 1.7;
     color: var(--lf-t);
     word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .lf-post-content p {
@@ -363,28 +422,10 @@ fluent-message-bar span[slot="icon"] svg {
     color: var(--lf-ts);
 }
 
-.lf-post-content .lf-post-meta,
-.lf-post-content .lf-meta,
-.lf-post-content .lf-author,
-.lf-post-content .lf-time,
-.lf-post-content .lf-floor {
-    font-size: 12px;
-    color: var(--lf-ts);
-}
-
 .lf-post-content hr {
     border: none;
     border-bottom: 1px solid var(--lf-b);
     margin: 1.8em 0;
-}
-
-.lf-post-reply {
-    padding: 16px 0;
-    border-bottom: 1px solid var(--lf-b);
-}
-
-.lf-post-reply:last-child {
-    border-bottom: none;
 }
 
 .lf-post-content blockquote {
@@ -469,6 +510,15 @@ fluent-message-bar span[slot="icon"] svg {
     color: var(--lf-t);
 }
 
+.lf-post-reply {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--lf-b);
+}
+
+.lf-post-reply:last-child {
+    border-bottom: none;
+}
+
 .lf-post-sidebar {
     display: flex;
     flex-direction: column;
@@ -490,46 +540,116 @@ fluent-message-bar span[slot="icon"] svg {
     justify-content: center;
 }
 
-fluent-menu-list[popover] {
-    animation: lf-menu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.twemoji {
+    width: 2.4em;
+    height: 2.4em;
+    vertical-align: -0.2em;
+    display: inline-block;
 }
 
-@keyframes lf-menu-in {
+.twemoji svg {
+    width: 100%;
+    height: 100%;
+}
+
+.lf-avatar-wrapper fluent-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lf-avatar-wrapper fluent-avatar::part(root) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+}
+
+.lf-avatar-wrapper fluent-avatar .default-icon,
+.lf-avatar-wrapper fluent-avatar svg {
+    margin: 0;
+    padding: 0;
+    display: block;
+    line-height: 1;
+}
+
+.lf-post-body {
+    animation: lf-post-body-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes lf-post-body-in {
     from {
         opacity: 0;
-        transform: scale(0.95) translateY(-4px);
+        transform: translateY(16px) scale(0.95);
     }
 
     to {
         opacity: 1;
-        transform: scale(1) translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
-.lf-content {
-    flex: 1;
+.lf-avatar-wrapper {
+    animation: lf-avatar-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes lf-avatar-in {
+    from {
+        opacity: 0;
+        transform: scale(0.5) rotate(-10deg);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.lf-comments-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.lf-comment {
+    animation: lf-post-body-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lf-no-comments {
     padding: 24px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    text-align: center;
+    color: var(--lf-ts);
 }
 
-.lf-section {
-    display: grid;
-    gap: 16px;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    margin-bottom: 16px;
+.lf-comment .lf-avatar-wrapper fluent-avatar {
+    width: 40px;
+    height: 40px;
 }
 
-.lf-section-7-3 {
-    grid-template-columns: 7fr 3fr;
+.lf-input-borderless {
+    border: none;
+    outline: none;
+    background: transparent;
+    border-bottom: 1px solid var(--lf-b);
+    border-radius: 0;
+    padding: 8px 4px;
+    font-size: 14px;
+    color: var(--lf-t);
+    transition: border-color .2s;
 }
 
-@media (max-width: 768px) {
-    .lf-section-7-3 {
-        grid-template-columns: 1fr;
-    }
+.lf-input-borderless:focus {
+    border-bottom-color: var(--lf-p);
+}
+
+.lf-input-borderless::placeholder {
+    color: var(--lf-ts);
+    font-size: 16px;
+}
+
+.twemoji {
+    width: 1.2em;
+    height: 1.2em;
+    display: inline-block;
+    vertical-align: -0.2em;
 }

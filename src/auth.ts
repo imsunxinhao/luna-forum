@@ -164,7 +164,7 @@ export function setupAuthRoutes(server: FastifyInstance): void {
         const canLogin = await privManager.hasPriv(user.uid, 'auth:login')
         if (!canLogin) {
             if (isFormRequest(request)) {
-                request.flash('error', '用户无法登录')
+                request.flash('error', '您的账户已被封禁')
                 return reply.redirect('/login')
             }
             return reply.code(403).send({ success: false, error: 'User cannot login' })

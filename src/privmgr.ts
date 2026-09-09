@@ -123,17 +123,28 @@ class PrivManager {
     }
 
     async initGuestUser(): Promise<void> {
-        const guest = await this.db.collection('users').findOne({ uid: 0 })
+        const db = this.db;
+        const guestRole = await db.collection('roles').findOne({ name: 'guest' });
+        if (!guestRole) {
+            throw new Error('Guest role not found. Run initDefaultRoles first.');
+        }
+        const guest = await db.collection('users').findOne({ uid: 0 });
         if (!guest) {
-            await this.db.collection('users').insertOne({
+            await db.collection('users').insertOne({
                 uid: 0,
                 username: 'guest',
-                roles: [],
+                roles: [guestRole._id.toString()],
                 banned: false,
                 createdAt: new Date()
-            })
+            });
+        } else if (!guest.roles || guest.roles.length === 0) {
+            await db.collection('users').updateOne(
+                { uid: 0 },
+                { $set: { roles: [guestRole._id.toString()] } }
+            );
         }
     }
+
     async banUser(userId: number): Promise<void> {
         if (userId === 0) throw new Error('Cannot ban guest user')
         await this.db.collection('users').updateOne(

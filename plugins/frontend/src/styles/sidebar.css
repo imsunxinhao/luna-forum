@@ -172,6 +172,7 @@ body {
 
 .lf-nav-item iconify-icon {
     vertical-align: middle;
+    width: 16px;
 }
 
 .lf-nav-item:hover {
@@ -312,6 +313,32 @@ body {
 .lf-title {
     font-size: 18px;
     font-weight: 600;
+}
+
+/* 语言切换：与 .lf-user 同为 padding:8px，使按钮左缘与头像对齐 */
+.lf-locale-switch {
+    padding: 8px;
+    transition: opacity .3s;
+}
+
+.lf-locale-switch fluent-menu-button {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--lf-ts);
+}
+
+.lf-locale-switch fluent-menu-button iconify-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    color: var(--lf-ts);
+}
+
+.lf-collapsed .lf-locale-switch {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
 }
 
 .lf-content {

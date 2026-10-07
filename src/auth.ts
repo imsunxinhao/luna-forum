@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { RegisterBody, LoginBody } from './types.js'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-
 const SALT_ROUNDS = 10
 const COOKIE_NAME = 'client_key'
 const TOKEN_EXPIRES = 7 * 24 * 60 * 60
@@ -98,7 +97,7 @@ export function setupAuthRoutes(server: FastifyInstance): void {
         const canRegister = await privManager.hasPriv(0, 'auth:register')
         if (!canRegister) {
             if (isFormRequest(request)) {
-                request.flash('error', '您没有权限注册账户')
+                request.flash('error', 'flash.noPrivRegister')
                 return reply.redirect('/register')
             }
             return reply.code(403).send({ success: false, error: 'Registration not allowed' })
@@ -148,7 +147,7 @@ export function setupAuthRoutes(server: FastifyInstance): void {
         const user = await db.collection('users').findOne({ username })
         if (!user) {
             if (isFormRequest(request)) {
-                request.flash('error', '用户名或密码错误')
+                request.flash('error', 'flash.invalidCredentials')
                 return reply.redirect('/login')
             }
             return reply.code(401).send({ success: false, error: 'Invalid credentials' })
@@ -156,7 +155,7 @@ export function setupAuthRoutes(server: FastifyInstance): void {
         const passwordMatch = await bcrypt.compare(password, user.password)
         if (!passwordMatch) {
             if (isFormRequest(request)) {
-                request.flash('error', '用户名或密码错误')
+                request.flash('error', 'flash.invalidCredentials')
                 return reply.redirect('/login')
             }
             return reply.code(401).send({ success: false, error: 'Invalid credentials' })

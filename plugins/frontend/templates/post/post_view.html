@@ -2,31 +2,86 @@
 {% block ext_script %}{% endblock %}
 {% block page_content %}
 <div class="lf-section lf-section-7-3">
-    <div class="lf-post lf-post-main">
-        <div class="lf-post-layout">
-            <h1 class="lf-post-title">{{ post_doc.title }}</h1>
+    <div class="lf-post-parent">
+        <div class="lf-post lf-post-main">
+            <div class="lf-post-layout">
+                <h1 class="lf-post-title">{{ post_doc.title }}</h1>
+                <div class="lf-post-body">
+                    <div class="lf-avatar-wrapper">
+                        <fluent-avatar data-color="neutral" class="lf-avatar" {% if author and not author.avatar %}
+                            initials="{{ author.username[0]|upper }}" {% endif %}>
+                            {% if author and author.avatar %}
+                            <img src="{{ author.avatar }}" alt="{{ author.username }}">
+                            {% endif %}
+                        </fluent-avatar>
+                    </div>
+                    <div class="lf-post-content-wrapper">
+                        <div class="lf-post-meta">
+                            <span class="lf-username">{{ author.username }}</span>
+                            <div class="lf-meta-info">
+                                <span class="lf-time">{{ post_doc.createdAt | timeago }}</span>
+                                {% if post_doc.updatedAt and post_doc.updatedAt != post_doc.createdAt %}
+                                <span class="lf-edited">{{ 'post.edited' | _ }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="lf-post-content">
+                            {{ post_doc.content | markdown | safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <h2 class="lf-post-title lf-comments-title">{{ 'post.comments' | _ }} ({{ comments|length }})</h2>
+        <div class="lf-post lf-post-main lf-comment">
             <div class="lf-post-body">
                 <div class="lf-avatar-wrapper">
-                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if author.avatar %}
-                        src="{{ author.avatar }}" {% else %} initials="{{ author.username[0]|upper if author else '' }}"
-                        {% endif %}></fluent-avatar>
+                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if user and not user.avatar %}
+                        initials="{{ user.username[0]|upper if user else '' }}" {% endif %}>
+                        {% if user and user.avatar %}
+                        <img src="{{ user.avatar }}" alt="{{ user.username }}">
+                        {% endif %}
+                    </fluent-avatar>
+                </div>
+                <div class="lf-post-content-wrapper">
+                    {% if user %}
+                    <textarea class="lf-input-borderless lf-input-borderless-big"
+                        placeholder="{{ 'post.writeComment' | _ }}"></textarea>
+                    {% else %}
+                    <textarea class="lf-input-borderless lf-input-borderless-big"
+                        placeholder="{{ 'post.loginToComment' | _ }}" disabled></textarea>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% for comment in comments %}
+        <div class="lf-post lf-post-main lf-comment" id="comment-{{ comment.id }}">
+            <div class="lf-post-body">
+                <div class="lf-avatar-wrapper">
+                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if comment.author and not comment.author.avatar %}
+                        initials="{{ comment.author.username[0]|upper }}" {% endif %}>
+                        {% if comment.author and comment.author.avatar %}
+                        <img src="{{ comment.author.avatar }}" alt="{{ comment.author.username }}">
+                        {% endif %}
+                    </fluent-avatar>
                 </div>
                 <div class="lf-post-content-wrapper">
                     <div class="lf-post-meta">
-                        <span class="lf-username">{{ author.username }}</span>
+                        <span class="lf-username">{{ comment.author.username }}</span>
                         <div class="lf-meta-info">
-                            <span class="lf-time">{{ post_doc.createdAt | timeago }}</span>
-                            {% if post_doc.editedAt %}
+                            <span class="lf-time">{{ comment.createdAt | timeago }}</span>
+                            {% if comment.updatedAt and comment.updatedAt != comment.createdAt %}
                             <span class="lf-edited">{{ 'post.edited' | _ }}</span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="lf-post-content">
-                        {{ post_doc.content | markdown | safe }}
+                        {{ comment.content | markdown | safe }}
                     </div>
                 </div>
             </div>
         </div>
+        {% endfor %}
     </div>
     <div class="lf-post lf-post-sidebar">
         <fluent-menu>
@@ -50,38 +105,5 @@
             </fluent-menu-list>
         </fluent-menu>
     </div>
-</div>
-
-<div class="lf-section">
-    <h2 class="lf-post-title lf-comments-title">{{ 'post.comments' | _ }} ({{ comments|length }})</h2>
-    {% for comment in comments %}
-    <div class="lf-post lf-post-main lf-comment" id="comment-{{ comment.id }}">
-        <div class="lf-post-body">
-            <div class="lf-avatar-wrapper">
-                <fluent-avatar data-color="neutral" class="lf-avatar" {% if comment.author.avatar %}
-                    src="{{ comment.author.avatar }}" {% else %} initials="{{ comment.author.username[0]|upper }}"
-                    {% endif %}></fluent-avatar>
-            </div>
-            <div class="lf-post-content-wrapper">
-                <div class="lf-post-meta">
-                    <span class="lf-username">{{ comment.author.username }}</span>
-                    <div class="lf-meta-info">
-                        <span class="lf-time">{{ comment.createdAt | timeago }}</span>
-                        {% if comment.editedAt %}
-                        <span class="lf-edited">{{ 'post.edited' | _ }}</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="lf-post-content">
-                    {{ comment.content | markdown | safe }}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="lf-post lf-post-main lf-no-comments">
-        <div class="lf-post-content">{{ 'post.noComments' | _ }}</div>
-    </div>
-    {% endfor %}
 </div>
 {% endblock %}

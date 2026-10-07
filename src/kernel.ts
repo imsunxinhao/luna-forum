@@ -4,6 +4,7 @@ import { hookManager } from './hookmgr.js'
 import { loadConfig, loadDBConfig, getSessionSecret } from './config.js'
 import { privManager } from './privmgr.js'
 import { registerAuthPrivs, setupAuthRoutes, setJWTSecret } from './auth.js'
+import { setupMailRoutes } from './mail.js'
 import Fastify, { FastifyInstance } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { fastifyCookie } from '@fastify/cookie'
@@ -74,6 +75,7 @@ export class Kernel {
         })
 
         setupAuthRoutes(this.server)
+        setupMailRoutes(this.server)
 
         await hookManager.call('kernel:beforeBoot')
         this.started = true

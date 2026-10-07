@@ -5,7 +5,7 @@ import { renderPage, setRequest } from './render.js';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { setLocale } from './i18n.js';
+import { setLocale, detectLocale, t, getAvailableLocales } from './i18n.js';
 
 function getFlash(request: FastifyRequest, key: string): string | null {
     const req = request as FastifyRequest & { session?: { get: (k: string) => unknown; set: (k: string, v: unknown) => void } };
@@ -19,6 +19,10 @@ function getFlash(request: FastifyRequest, key: string): string | null {
     return value;
 }
 
+function applyRequestLocale(request: FastifyRequest): void {
+    setLocale(detectLocale(request.headers, (request as FastifyRequest & { cookies?: Record<string, string> }).cookies));
+}
+
 export function setupFrontendRoutes(server: FastifyInstance): void {
     server.addHook('onRequest', async (request: FastifyRequest) => {
         setRequest(request);
@@ -29,19 +33,22 @@ export function setupFrontendRoutes(server: FastifyInstance): void {
     });
     server.get('/login', async (request: FastifyRequest, reply: FastifyReply) => {
         const error = getFlash(request, 'error');
+        applyRequestLocale(request);
         const html = await renderPage('login.html', {
-            pagename: '登录',
+            pagename: t('page.login'),
             error
         });
         return reply.type('text/html').send(html);
     });
     server.get('/register', async (request: FastifyRequest, reply: FastifyReply) => {
         const error = getFlash(request, 'error');
-        const html = await renderPage('register.html', { pagename: '注册', error });
+        applyRequestLocale(request);
+        const html = await renderPage('register.html', { pagename: t('page.register'), error });
         return reply.type('text/html').send(html);
     });
     server.get('/post/:id', async (request: FastifyRequest, reply: FastifyReply) => {
         const { id } = request.params as { id: string };
+        applyRequestLocale(request);
         const db = getDB();
         const post = await db.collection('posts').findOne({ _id: new ObjectId(id) });
         if (!post) {
@@ -65,17 +72,55 @@ export function setupFrontendRoutes(server: FastifyInstance): void {
             })
         );
         const html = await renderPage('post/post_view.html', {
-            pagename: post.title ?? '帖子预览',
+            pagename: post.title ?? t('page.postPreview'),
             post_doc: post,
             author,
             comments
         });
         return reply.type('text/html').send(html);
     });
+    server.get('/user/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { id } = request.params as { id: string };
+        const { page = 1, limit = 20 } = request.query as { page?: string; limit?: string };
+        applyRequestLocale(request);
+        const db = getDB();
+        const uid = Number(id);
+        if (!Number.isInteger(uid) || uid < 0) {
+            return reply.code(400).send({ success: false, error: 'Invalid user id' });
+        }
+        const user_doc = await db.collection('users').findOne(
+            { uid },
+            { projection: { password: 0, twofaSecret: 0, _id: 0 } }
+        );
+        if (!user_doc) {
+            return reply.code(404).send({ success: false, error: 'User not found' });
+        }
+        const pageNum = Math.max(1, Number(page) || 1);
+        const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
+        const skip = (pageNum - 1) * limitNum;
+        const postFilter = { authorId: uid };
+        const posts = await db.collection('posts')
+            .find(postFilter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limitNum)
+            .toArray();
+        const total = await db.collection('posts').countDocuments(postFilter);
+        const html = await renderPage('user_home.html', {
+            pagename: user_doc.username ?? t('page.userProfile'),
+            user_doc,
+            posts,
+            total,
+            page: pageNum,
+            limit: limitNum
+        });
+        return reply.type('text/html').send(html);
+    });
     server.get('/api/v1/locale/:locale', async (request: FastifyRequest, reply: FastifyReply) => {
         const { locale } = request.params as { locale: string };
         const { redirect } = request.query as { redirect?: string };
-        if (!['zh-cn', 'en'].includes(locale)) {
+        const available = getAvailableLocales().map(l => l.code);
+        if (!available.includes(locale)) {
             return reply.code(400).send({ success: false, error: 'Invalid locale' });
         }
         setLocale(locale);
@@ -87,7 +132,10 @@ export function setupFrontendRoutes(server: FastifyInstance): void {
             maxAge: 365 * 24 * 60 * 60
         });
         if (redirect) {
-            return reply.redirect(redirect);
+            if (redirect.startsWith('/') && !redirect.startsWith('//')) {
+                return reply.redirect(redirect);
+            }
+            return reply.redirect('/');
         }
         return { success: true, locale };
     });

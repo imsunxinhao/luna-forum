@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "code": "en",
+    "name": "English"
+  },
   "layout": {
     "home": "Home",
     "logout": "Log out",
@@ -11,7 +15,7 @@
     "noAccount": "No account yet?",
     "registerOne": "Register one!",
     "registerTitle": "Register on {{name}}",
-    "registerSubtitle": "Welcome to {{name}}! Already have an account?",
+    "registerSubtitle": "Already have an account?",
     "loginNow": "Log in now!",
     "username": "Username",
     "password": "Password",
@@ -31,12 +35,29 @@
     "menuItem4": "Menu item 4",
     "edited": "Edited",
     "comments": "Comments",
-    "noComments": "No comments yet"
+    "noComments": "No comments yet",
+    "writeComment": "Write your comment...",
+    "loginToComment": "Log in to comment"
   },
   "time": {
     "justNow": "just now",
     "minutesAgo": "{{count}} minutes ago",
     "hoursAgo": "{{count}} hours ago",
-    "daysAgo": "{{count}} days ago"
+    "daysAgo": "{{count}} days ago",
+    "minutesLater": "in {{count}} minutes",
+    "hoursLater": "in {{count}} hours",
+    "daysLater": "in {{count}} days"
+  },
+  "page": {
+    "login": "Log in",
+    "register": "Register",
+    "postPreview": "Post Preview"
+  },
+  "flash": {
+    "noPrivRegister": "You are not allowed to register an account.",
+    "userExists": "Username or email already exists.",
+    "invalidCredentials": "Invalid username or password.",
+    "banned": "Your account has been banned.",
+    "loginSuccess": "Logged in successfully."
   }
 }

@@ -59,6 +59,7 @@ export interface User {
     username: string
     roles: string[]
     avatar?: string
+    bio?: string
     banned: boolean
 }
 

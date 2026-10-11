@@ -1,5 +1,8 @@
 {% extends "layout.html" %}
-{% block ext_script %}{% endblock %}
+{% block ext_script %}
+<meta name="post-id" content="{{ post_doc._id }}">
+<script type="module" src="/static/dist/post_view.js"></script>
+{% endblock %}
 {% block page_content %}
 <div class="lf-section lf-section-7-3">
     <div class="lf-post-parent">
@@ -25,9 +28,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="lf-post-content">
-                            {{ post_doc.content | markdown | safe }}
-                        </div>
+                        <div class="lf-post-content" data-lf-md>{{ post_doc.content }}</div>
                     </div>
                 </div>
             </div>
@@ -45,8 +46,15 @@
                 </div>
                 <div class="lf-post-content-wrapper">
                     {% if user %}
-                    <textarea class="lf-input-borderless lf-input-borderless-big"
-                        placeholder="{{ 'post.writeComment' | _ }}"></textarea>
+                    <div class="lf-comment-input" data-lf-comment-input>
+                        <textarea class="lf-input-borderless lf-input-borderless-big" name="comment"
+                            placeholder="{{ 'post.writeComment' | _ }}"></textarea>
+                    </div>
+                    <div class="lf-comment-send-wrapper">
+                        <fluent-button appearance="primary" data-lf-comment-send>
+                            {{ 'post.sendComment' | _ }}
+                        </fluent-button>
+                    </div>
                     {% else %}
                     <textarea class="lf-input-borderless lf-input-borderless-big"
                         placeholder="{{ 'post.loginToComment' | _ }}" disabled></textarea>
@@ -58,8 +66,8 @@
         <div class="lf-post lf-post-main lf-comment" id="comment-{{ comment.id }}">
             <div class="lf-post-body">
                 <div class="lf-avatar-wrapper">
-                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if comment.author and not comment.author.avatar %}
-                        initials="{{ comment.author.username[0]|upper }}" {% endif %}>
+                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if comment.author and not
+                        comment.author.avatar %} initials="{{ comment.author.username[0]|upper }}" {% endif %}>
                         {% if comment.author and comment.author.avatar %}
                         <img src="{{ comment.author.avatar }}" alt="{{ comment.author.username }}">
                         {% endif %}
@@ -75,9 +83,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="lf-post-content">
-                        {{ comment.content | markdown | safe }}
-                    </div>
+                    <div class="lf-post-content" data-lf-md>{{ comment.content }}</div>
                 </div>
             </div>
         </div>

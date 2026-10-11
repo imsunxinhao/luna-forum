@@ -7,7 +7,7 @@
 <head>
     <title>{% block title %}{{ site.name }} - {{ pagename }}{% endblock %}</title>
     {% block ext_script %}{% endblock %}
-    <script src="{{ bundlePath }}"></script>
+    <script src="{{ bundlePath }}" type="module"></script>
     <link rel="stylesheet" href="{{ stylePath }}">
 </head>
 
@@ -96,6 +96,7 @@
         </div>
     </main>
     <div class="lf-overlay" data-lf-drawer-overlay></div>
+    <div id="lf-toast-container" class="lf-toast-container"></div>
 </body>
 
 </html>

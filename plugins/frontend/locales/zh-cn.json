@@ -25,7 +25,14 @@
         "and": "和",
         "privacy": "隐私保护协议",
         "login": "登录",
-        "register": "注册"
+        "register": "注册",
+        "forgotPassword": "忘记密码？",
+        "forgotSubtitle": "输入注册时使用的邮箱，我们会把重置链接发给你",
+        "sendResetLink": "发送重置链接",
+        "resetPassword": "重置密码",
+        "resetSubtitle": "设置你的新密码",
+        "newPassword": "新密码",
+        "backToLogin": "返回登录"
     },
     "post": {
         "actions": "帖子操作",
@@ -37,7 +44,8 @@
         "comments": "评论",
         "noComments": "暂无评论",
         "writeComment": "写下你的评论...",
-        "loginToComment": "登录后评论"
+        "loginToComment": "登录后评论",
+        "sendComment": "发布"
     },
     "time": {
         "justNow": "刚刚",
@@ -51,14 +59,26 @@
     "page": {
         "login": "登录",
         "register": "注册",
-        "postPreview": "帖子预览"
+        "forgotPassword": "找回密码",
+        "resetPassword": "重置密码",
+        "postPreview": "帖子预览",
+        "home": "首页"
     },
     "flash": {
         "noPrivRegister": "您没有权限注册账户。",
         "userExists": "用户名或邮箱已存在。",
         "invalidCredentials": "用户名或密码错误。",
         "banned": "您的账户已被封禁。",
-        "loginSuccess": "登录成功。"
+        "loginSuccess": "登录成功。",
+        "registerMailSent": "一封含有注册链接的邮件已发送到您的邮箱",
+        "verifySuccess": "邮箱验证成功，请登录。",
+        "verifyInvalid": "验证链接无效或已过期，请重新注册。",
+        "resetMailSent": "如果该邮箱存在，重置密码的邮件已发送到您的邮箱。",
+        "resetSuccess": "密码已重置，请使用新密码登录。",
+        "smtpNotConfigured": "未配置 SMTP，该功能暂不可用。",
+        "mailSendFailed": "邮件发送失败，请稍后重试。",
+        "invalidEmail": "邮箱格式不正确。",
+        "forgotPasswordDisabled": "找回密码已被禁用。"
     },
     "user": {
         "registered": "注册于",

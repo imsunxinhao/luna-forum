@@ -1,20 +1,13 @@
 import { marked } from 'marked';
 import katex from 'katex';
-import createDOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
-import { createRequire } from 'module';
-import { readFileSync } from 'fs';
-import { LRUCache } from 'lru-cache';
+import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
+import twemojiModule from '@twemoji/api';
+import type { Twemoji } from '@twemoji/api';
 
-const require = createRequire(import.meta.url);
-const window = new JSDOM('').window;
-const DOMPurify = createDOMPurify(window as unknown as import('dompurify').WindowLike);
-
-const renderCache = new LRUCache<string, string>({
-    max: 500,
-    ttl: 1000 * 60 * 30
-});
+// @twemoji/api ships CommonJS-shaped type declarations while bundlers resolve
+// its ESM build; both expose the same Twemoji object as the default export.
+const twemoji = twemojiModule as unknown as Twemoji;
 
 const inlineMath = {
     name: 'inlineMath',
@@ -62,31 +55,45 @@ const codeRenderer = {
 
 marked.use({ extensions: [inlineMath, blockMath], renderer: { code: codeRenderer.renderer } });
 
-const EMOJI_REGEX = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/g;
+const MATH_OPEN = '<span class="katex';
+const SPAN_TOKEN = /<span\b[^>]*>|<\/span>/g;
 
-function renderEmoji(emoji: string): string {
-    try {
-        const codepoint = require('twemoji').convert.toCodePoint(emoji);
-        const svgPath = require.resolve(`@twemoji/svg/${codepoint}.svg`);
-        const svg = readFileSync(svgPath, 'utf-8')
-            .replace('<svg', '<svg width="1.2em" height="1.2em"');
-        return svg;
-    } catch {
-        return emoji;
+/**
+ * Replace every KaTeX block with a placeholder so the first sanitizing pass
+ * leaves the generated markup (and its inline styles) untouched.
+ */
+function protectMath(html: string, store: string[]): string {
+    let out = '';
+    let cursor = 0;
+    let start = html.indexOf(MATH_OPEN, cursor);
+    while (start !== -1) {
+        const openEnd = html.indexOf('>', start);
+        if (openEnd === -1) break;
+        SPAN_TOKEN.lastIndex = openEnd + 1;
+        let depth = 1;
+        let end = -1;
+        let token: RegExpExecArray | null;
+        while ((token = SPAN_TOKEN.exec(html)) !== null) {
+            depth += token[0] === '</span>' ? -1 : 1;
+            if (depth === 0) {
+                end = SPAN_TOKEN.lastIndex;
+                break;
+            }
+        }
+        if (end === -1) break;
+        out += html.slice(cursor, start) + `__LF_MATH_${store.length}__`;
+        store.push(html.slice(start, end));
+        cursor = end;
+        start = html.indexOf(MATH_OPEN, cursor);
     }
+    return out + html.slice(cursor);
 }
 
-function renderMarkdownUncached(content: string): string {
+function renderMarkdownHtml(content: string): string {
     const html = marked.parse(content, { async: false }) as string;
 
     const mathBlocks: string[] = [];
-    const protectedHtml = html.replace(
-        /<span class="katex[^"]*"[\s\S]*?<\/span>/g,
-        (match: string) => {
-            mathBlocks.push(match);
-            return `__MATH_${mathBlocks.length - 1}__`;
-        }
-    );
+    const protectedHtml = protectMath(html, mathBlocks);
 
     const sanitized = DOMPurify.sanitize(protectedHtml, {
         ALLOWED_TAGS: [
@@ -108,15 +115,13 @@ function renderMarkdownUncached(content: string): string {
     });
 
     const withFluentLinks = sanitized.replace(
-        /<a([^>]*href="[^"]*"[^>]*)>([\s\S]*?)<\/a>/g,
+        /<a(\s[^>]*href="[^"]*"[^>]*)>([\s\S]*?)<\/a>/g,
         '<fluent-link$1>$2</fluent-link>'
     );
 
-    const withEmoji = withFluentLinks.replace(EMOJI_REGEX, renderEmoji);
-
-    const withMathRestored = withEmoji.replace(
-        /__MATH_(\d+)__/g,
-        (_match: string, index: string) => mathBlocks[parseInt(index)]
+    const withMathRestored = withFluentLinks.replace(
+        /__LF_MATH_(\d+)__/g,
+        (_match: string, index: string) => mathBlocks[parseInt(index)] ?? ''
     );
 
     return DOMPurify.sanitize(withMathRestored, {
@@ -146,11 +151,26 @@ function renderMarkdownUncached(content: string): string {
 
 export function renderMarkdown(content: string): string {
     if (!content) return '';
-    const cached = renderCache.get(content);
-    if (cached !== undefined) return cached;
-    const result = renderMarkdownUncached(content);
-    renderCache.set(content, result);
-    return result;
+    return renderMarkdownHtml(content);
 }
 
-export const RENDER_VERSION = 2;
+/**
+ * Render every `[data-lf-md]` container in the page: raw markdown comes from
+ * the server as escaped text, the browser turns it into HTML, and Twemoji
+ * swaps emoji characters for the self-hosted SVG assets.
+ */
+export function renderMarkdownNodes(root: ParentNode = document): void {
+    const nodes = root.querySelectorAll<HTMLElement>('[data-lf-md]');
+    nodes.forEach((node) => {
+        if (node.hasAttribute('data-lf-md-rendered')) return;
+        const source = node.textContent ?? '';
+        node.innerHTML = renderMarkdown(source);
+        twemoji.parse(node, {
+            base: '/static/twemoji/',
+            folder: 'svg',
+            ext: '.svg',
+            className: 'lf-emoji'
+        });
+        node.setAttribute('data-lf-md-rendered', 'true');
+    });
+}

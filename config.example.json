@@ -4,6 +4,18 @@
         "dbName": "[请填写您的数据库名称]"
     },
     "jwt_secret": "your-super-secret-key-here-please-change-it-thanks",
+    "site": {
+        "name": "Luna Forum",
+        "description": "",
+        "url": ""
+    },
+    "smtp": {
+        "host": "[请填写您的 SMTP 服务器地址]",
+        "port": 465,
+        "user": "[请填写您的 SMTP 用户名]",
+        "pass": "[请填写您的 SMTP 密码]",
+        "from": "[请填写您的 SMTP 发件人地址]"
+    },
     "plugins": [
         {
             "name": "post",

@@ -7,7 +7,6 @@ import { getConfig } from '../../src/config.js';
 import { getCurrentUser, getUserIdFromRequest } from '../../src/auth.js';
 import type { FastifyRequest } from 'fastify';
 import { privManager } from '../../src/privmgr.js';
-import { renderMarkdown } from './markdown.js';
 
 interface FileSystemLoaderLike {
     searchPaths: string[];
@@ -37,10 +36,6 @@ export function addTemplatePath(path: string): void {
 }
 
 env.addFilter('_', (key: string, options?: Record<string, unknown>) => t(key));
-
-env.addFilter('markdown', (content: string) => {
-  return renderMarkdown(content);
-});
 
 env.addFilter('timeago', (date: unknown) => {
     if (!date) return '';

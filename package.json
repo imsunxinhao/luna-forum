@@ -45,6 +45,7 @@
         "lru-cache": "^11.5.2",
         "marked": "^18.0.11",
         "marked-katex-extension": "^5.1.12",
+        "monaco-editor": "^0.57.0",
         "mongodb": "^7.4.0",
         "nodemailer": "^10.0.10",
         "nunjucks": "^3.2.4",

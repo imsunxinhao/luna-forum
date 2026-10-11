@@ -312,4 +312,69 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         await kernel.callHook('post:afterDelete', post);
         return reply.code(204).send();
     });
+
+    // ------------------------------------------------------------------
+    // 评论创建
+    // ------------------------------------------------------------------
+    const createCommentParamsSchema = Type.Object({
+        id: Type.String()
+    });
+    const createCommentBodySchema = Type.Object({
+        content: Type.String({ minLength: 1 })
+    });
+
+    server.post<{
+        Params: Static<typeof createCommentParamsSchema>,
+        Body: Static<typeof createCommentBodySchema>
+    }>('/api/v1/post/:id/comment', {
+        schema: {
+            params: createCommentParamsSchema,
+            body: createCommentBodySchema
+        }
+    }, async (request, reply) => {
+        const { id } = request.params;
+        const { content } = request.body;
+        const userId = kernel.getUserIdFromRequest(request);
+
+        if (!userId) {
+            return reply.code(401).send({ success: false, error: 'Login required' });
+        }
+        const trimmed = content.trim();
+        if (!trimmed) {
+            return reply.code(400).send({ success: false, error: 'Empty content' });
+        }
+
+        const db = kernel.getDB();
+
+        let postId: ObjectId;
+        try {
+            postId = new ObjectId(id);
+        } catch {
+            return reply.code(400).send({ success: false, error: 'Invalid post id' });
+        }
+
+        const post = await db.collection('posts').findOne({ _id: postId }) as Post | null;
+        if (!post) {
+            return reply.code(404).send({ success: false, error: 'Post not found' });
+        }
+        if (!(await canViewPost(db, post, userId, kernel))) {
+            return reply.code(403).send({ success: false, error: 'No permission to comment on this post' });
+        }
+
+        const comment = {
+            postId: id,
+            authorId: userId,
+            content: trimmed,
+            createdAt: new Date().toISOString()
+        };
+
+        await kernel.callHook('comment:beforeCreate', comment);
+
+        const result = await db.collection('comments').insertOne(comment);
+        const created = { ...comment, _id: result.insertedId };
+
+        await kernel.callHook('comment:afterCreate', created);
+
+        return reply.code(201).send({ success: true, comment: created });
+    });
 }

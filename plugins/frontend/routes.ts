@@ -6,6 +6,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { setLocale, detectLocale, t, getAvailableLocales } from './i18n.js';
+import { isMailConfigured } from '../../src/mail.js';
 
 function getFlash(request: FastifyRequest, key: string): string | null {
     const req = request as FastifyRequest & { session?: { get: (k: string) => unknown; set: (k: string, v: unknown) => void } };
@@ -33,17 +34,55 @@ export function setupFrontendRoutes(server: FastifyInstance): void {
     });
     server.get('/login', async (request: FastifyRequest, reply: FastifyReply) => {
         const error = getFlash(request, 'error');
+        const success = getFlash(request, 'success');
         applyRequestLocale(request);
         const html = await renderPage('login.html', {
             pagename: t('page.login'),
-            error
+            error,
+            success,
+            smtpEnabled: isMailConfigured()
         });
         return reply.type('text/html').send(html);
     });
     server.get('/register', async (request: FastifyRequest, reply: FastifyReply) => {
         const error = getFlash(request, 'error');
+        const success = getFlash(request, 'success');
         applyRequestLocale(request);
-        const html = await renderPage('register.html', { pagename: t('page.register'), error });
+        const html = await renderPage('register.html', {
+            pagename: t('page.register'),
+            error,
+            success
+        });
+        return reply.type('text/html').send(html);
+    });
+    server.get('/lostpass', async (request: FastifyRequest, reply: FastifyReply) => {
+        applyRequestLocale(request);
+        if (!isMailConfigured()) { request.flash('error', 'flash.forgotPasswordDisabled'); return reply.redirect('/login'); }
+        const html = await renderPage('forgot_password.html', {
+            pagename: t('page.forgotPassword'),
+            error: getFlash(request, 'error'),
+            success: getFlash(request, 'success')
+        });
+        return reply.type('text/html').send(html);
+    });
+    server.get('/reset-password', async (request: FastifyRequest, reply: FastifyReply) => {
+        applyRequestLocale(request);
+        if (!isMailConfigured()) return reply.redirect('/login');
+        const { token } = request.query as { token?: string };
+        if (!token) return reply.redirect('/forgot-password');
+        const html = await renderPage('reset_password.html', {
+            pagename: t('page.resetPassword'),
+            token,
+            error: getFlash(request, 'error'),
+            success: getFlash(request, 'success')
+        });
+        return reply.type('text/html').send(html);
+    });
+    server.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
+        applyRequestLocale(request);
+        const html = await renderPage('index.html', {
+            pagename: t('page.home')
+        });
         return reply.type('text/html').send(html);
     });
     server.get('/post/:id', async (request: FastifyRequest, reply: FastifyReply) => {

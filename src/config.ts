@@ -12,14 +12,18 @@ export interface AppConfig {
     site?: {
         name: string
         description: string
+        /** 对外可访问的站点地址（如 https://forum.example.com），用于邮件里的链接；留空则用请求的 Host */
+        url?: string
     }
     jwt_secret: string
     session_secret?: string
-    smtp_host?: string
-    smtp_port?: number
-    smtp_user?: string
-    smtp_pass?: string
-    smtp_from?: string
+    smtp?: {
+        host?: string
+        port?: number
+        user?: string
+        pass?: string
+        from?: string
+    }
     plugins: PluginConfig[]
 }
 
@@ -49,7 +53,7 @@ export async function loadConfig(defaultConfigPath: string = './config.json'): P
         try {
             appConfig = JSON.parse(configFromEnv) as AppConfig
         } catch (e) {
-            throw new Error(`CONFIG 环境变量包含无效的 JSON: ${e instanceof Error ? e.message : String(e)}`)
+            throw new Error(`CONFIG environment variable contains invalid JSON: ${e instanceof Error ? e.message : String(e)}`)
         }
     } else {
         const fullPath = resolve(process.env.CONFIG_PATH ?? path.join(import.meta.dirname, '..', defaultConfigPath))
@@ -62,7 +66,7 @@ export async function loadConfig(defaultConfigPath: string = './config.json'): P
         try {
             appConfig = JSON.parse(fileContent) as AppConfig
         } catch (e) {
-            throw new Error(`配置文件解析失败 (${fullPath}): ${e instanceof Error ? e.message : String(e)}`)
+            throw new Error(`Failed to parse config file (${fullPath}): ${e instanceof Error ? e.message : String(e)}`)
         }
 
         if (!appConfig.mongodb?.uri) {
@@ -151,15 +155,20 @@ export async function setSiteConfig(site: Partial<SiteConfig>): Promise<void> {
     if (site.description !== undefined) await setDBConfig('site.description', site.description)
 }
 
+export function getSiteOrigin(): string {
+    const origin = getDBConfigValue<string>('site.url', appConfig?.site?.url ?? '')
+    return origin.replace(/\/+$/, '')
+}
+
 export function getSMTPConfig(): SMTPConfig | null {
-    const host = getDBConfigValue<string>('smtp.host', appConfig?.smtp_host ?? '')
+    const host = getDBConfigValue<string>('smtp.host', appConfig?.smtp?.host ?? '')
     if (!host) return null
     return {
         host,
-        port: getDBConfigValue<number>('smtp.port', appConfig?.smtp_port ?? 587),
-        user: getDBConfigValue<string>('smtp.user', appConfig?.smtp_user ?? ''),
-        pass: getDBConfigValue<string>('smtp.pass', appConfig?.smtp_pass ?? ''),
-        from: getDBConfigValue<string>('smtp.from', appConfig?.smtp_from ?? '')
+        port: getDBConfigValue<number>('smtp.port', appConfig?.smtp?.port ?? 587),
+        user: getDBConfigValue<string>('smtp.user', appConfig?.smtp?.user ?? ''),
+        pass: getDBConfigValue<string>('smtp.pass', appConfig?.smtp?.pass ?? ''),
+        from: getDBConfigValue<string>('smtp.from', appConfig?.smtp?.from ?? '')
     }
 }
 

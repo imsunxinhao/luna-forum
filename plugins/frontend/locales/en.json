@@ -25,7 +25,14 @@
     "and": "and",
     "privacy": "Privacy Policy",
     "login": "Log in",
-    "register": "Register"
+    "register": "Register",
+    "forgotPassword": "Forgot password?",
+    "forgotSubtitle": "Enter the email you registered with and we will send you a reset link",
+    "sendResetLink": "Send reset link",
+    "resetPassword": "Reset password",
+    "resetSubtitle": "Choose your new password",
+    "newPassword": "New password",
+    "backToLogin": "Back to log in"
   },
   "post": {
     "actions": "Post actions",
@@ -37,7 +44,8 @@
     "comments": "Comments",
     "noComments": "No comments yet",
     "writeComment": "Write your comment...",
-    "loginToComment": "Log in to comment"
+    "loginToComment": "Log in to comment",
+    "sendComment": "Send"
   },
   "time": {
     "justNow": "just now",
@@ -51,13 +59,24 @@
   "page": {
     "login": "Log in",
     "register": "Register",
-    "postPreview": "Post Preview"
+    "forgotPassword": "Forgot password",
+    "resetPassword": "Reset password",
+    "postPreview": "Post Preview",
+    "home": "Home"
   },
   "flash": {
     "noPrivRegister": "You are not allowed to register an account.",
     "userExists": "Username or email already exists.",
     "invalidCredentials": "Invalid username or password.",
     "banned": "Your account has been banned.",
-    "loginSuccess": "Logged in successfully."
+    "loginSuccess": "Logged in successfully.",
+    "registerMailSent": "An email with your registration link has been sent to your mailbox.",
+    "verifySuccess": "Email verified. Please sign in.",
+    "verifyInvalid": "This verification link is invalid or has expired. Please register again.",
+    "resetMailSent": "If that email exists, a password reset mail has been sent to it.",
+    "resetSuccess": "Your password has been reset. Please sign in with the new password.",
+    "smtpNotConfigured": "SMTP is not configured, so this feature is unavailable.",
+    "mailSendFailed": "Failed to send the email. Please try again later.",
+    "invalidEmail": "Invalid email address."
   }
 }

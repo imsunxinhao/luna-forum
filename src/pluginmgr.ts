@@ -5,6 +5,7 @@ import { pathToFileURL } from 'url';
 import { getDBConfigValue, setDBConfig } from './config.js'
 import { privManager } from './privmgr.js'
 import { getUserIdFromRequest } from './auth.js'
+import { sendMail, isMailConfigured, getMailStatus } from './mail.js'
 import { FastifyInstance } from 'fastify'
 import nodePath from 'path'
 import { promises } from 'fs'
@@ -42,7 +43,10 @@ class PluginManager {
             setUserRole: (userId, roleId) => privManager.setUserRole(userId, roleId),
             removeUserRole: (userId, roleId) => privManager.removeUserRole(userId, roleId),
             banUser: (userId) => privManager.banUser(userId),
-            unbanUser: (userId) => privManager.unbanUser(userId)
+            unbanUser: (userId) => privManager.unbanUser(userId),
+            sendMail: (message) => sendMail(message),
+            isMailConfigured: () => isMailConfigured(),
+            getMailStatus: () => getMailStatus()
         }
         return this.kernelAPI
     }

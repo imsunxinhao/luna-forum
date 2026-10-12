@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block ext_script %}{% endblock %}
+{% block page_content %}
+<div class="lf-user-header" {% if user_doc.background %}style="background-image:url('{{ user_doc.background }}')"{% endif %}>
+    <div class="lf-user-header-overlay"></div>
+    <div class="lf-user-header-content">
+        <div class="lf-user-avatar-lg">
+            <fluent-avatar data-color="neutral" class="lf-avatar" {% if not user_doc.avatar %}
+                initials="{{ user_doc.username[0]|upper }}" {% endif %}>
+                {% if user_doc.avatar %}
+                <img src="{{ user_doc.avatar }}" alt="{{ user_doc.username }}">
+                {% endif %}
+            </fluent-avatar>
+        </div>
+        <div class="lf-user-header-info">
+            <h1 class="lf-home-username">{{ user_doc.username }}</h1>
+            <div class="lf-user-meta">
+                <span>UID: {{ user_doc.uid }}</span>
+                <span>{{ 'user.registered' | _ }} {{ user_doc.createdAt | timeago }}</span>
+                {% if user_doc.lastLoginAt %}
+                <span>{{ 'user.lastLogin' | _ }} {{ user_doc.lastLoginAt | timeago }}</span>
+                {% endif %}
+                {% if user_doc.lastActiveAt %}
+                <span>{{ 'user.lastActive' | _ }} {{ user_doc.lastActiveAt | timeago }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="lf-user-actions">
+            <iconify-icon icon="fluent:mail-24-regular" title="{{ 'user.message' | _ }}"></iconify-icon>
+            <iconify-icon icon="fluent:alert-24-regular" title="{{ 'user.notify' | _ }}"></iconify-icon>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

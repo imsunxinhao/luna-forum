@@ -3,7 +3,8 @@ import { pluginManager } from './pluginmgr.js'
 import { hookManager } from './hookmgr.js'
 import { loadConfig, loadDBConfig, getSessionSecret } from './config.js'
 import { privManager } from './privmgr.js'
-import { registerAuthPrivs, setupAuthRoutes, setJWTSecret } from './auth.js'
+import { registerAuthPrivs, setupAuthRoutes, setJWTSecret, getUserIdFromRequest } from './auth.js'
+import { setupMailRoutes, registerMailPrivs, initMail, closeMail } from './mail.js'
 import Fastify, { FastifyInstance } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { fastifyCookie } from '@fastify/cookie'
@@ -24,9 +25,14 @@ export class Kernel {
         await connect(config.mongodb.uri, config.mongodb.dbName || 'forum')
 
         registerAuthPrivs()
+        registerMailPrivs()
+        
+        await privManager.initDefaultRoles();
 
         await privManager.initGuestUser()
 
+        await privManager.applyDefaultPerms(); 
+        
         await loadDBConfig()
 
         const isDev = process.env.NODE_ENV !== 'production'
@@ -41,7 +47,9 @@ export class Kernel {
                         options: {
                             translateTime: 'HH:MM:ss Z',
                             ignore: 'pid,hostname',
-                            colorize: true,
+                            // Only colorize on a real TTY; when logs are piped/captured
+                            // by a panel, disable colors so they do not garble the output.
+                            colorize: process.stdout.isTTY === true,
                             singleLine: true
                         }
                     }
@@ -64,12 +72,15 @@ export class Kernel {
         });
 
         this.server.register(fastifyFlash);
-        
+
+        initMail(this.server.log)
+
         this.server.get('/api/v1/health', async () => {
             return { status: 'ok', plugins: pluginManager.getPluginNames() }
         })
 
         setupAuthRoutes(this.server)
+        setupMailRoutes(this.server, getUserIdFromRequest)
 
         await hookManager.call('kernel:beforeBoot')
         this.started = true
@@ -114,6 +125,8 @@ export class Kernel {
 
     async stop() {
         await hookManager.call('kernel:beforeStop')
+
+        closeMail()
 
         if (this.server) {
             await this.server.close()

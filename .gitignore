@@ -1,5 +1,6 @@
 node_modules/
 dist/
+plugins/frontend/public/twemoji/
 config.json
 *.log
 .DS_Store
@@ -8,6 +9,7 @@ package-lock.json
 /generated/prisma
 .vercel
 .env*
+plugins/frontend/public/
 
 # 本地敏感配置与凭证（勿提交）
 *.local.yaml

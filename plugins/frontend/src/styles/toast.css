@@ -1,0 +1,126 @@
+.lf-toast-item {
+    pointer-events: auto;
+    position: relative;
+    min-width: 260px;
+    max-width: 420px;
+    border-radius: 4px;
+    box-shadow: 0 15px 35px -8px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform-origin: bottom right;
+    will-change: transform, opacity;
+    user-select: none;
+    touch-action: pan-y;
+    box-sizing: border-box;
+}
+
+.lf-toast-item * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.lf-toast-item.lf-toast-dragging {
+    transition: none !important;
+}
+
+.lf-toast-item:not(.lf-toast-dragging):not(.lf-toast-out):not(.lf-toast-animating) {
+    animation: lf-toast-in 0.3s cubic-bezier(0.21, 1.02, 0.73, 1);
+}
+
+.lf-toast-item.lf-toast-animating {
+    animation: none;
+}
+
+@keyframes lf-toast-in {
+    0% { opacity: 0; transform: translateX(60px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.lf-toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+}
+
+.lf-toast-icon svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    fill: #ffffff;
+}
+
+.lf-toast-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+    min-height: 20px;
+    user-select: none;
+}
+
+.lf-toast-title {
+    font-weight: 700;
+    font-size: 0.875rem;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    color: #ffffff;
+}
+
+.lf-toast-message {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
+    word-break: break-word;
+}
+
+.lf-toast-content > .lf-toast-title:only-child {
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.lf-toast-content > .lf-toast-message:only-child {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ffffff;
+    margin: 0;
+}
+
+.lf-toast-close {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #ffffff;
+    transition: background 0.15s;
+    padding: 0;
+}
+
+.lf-toast-close svg {
+    width: 14px;
+    height: 14px;
+    fill: #ffffff;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+
+.lf-toast-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.lf-toast-close:hover svg {
+    opacity: 1;
+}

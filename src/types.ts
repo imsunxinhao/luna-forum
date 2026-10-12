@@ -35,6 +35,9 @@ export interface KernelAPI {
     removeUserRole: (userId: number, roleId: string) => Promise<void>
     banUser: (userId: number) => Promise<void>
     unbanUser: (userId: number) => Promise<void>
+    sendMail: (message: MailMessage) => Promise<string>
+    isMailConfigured: () => boolean
+    getMailStatus: () => MailStatus
 }
 
 export type HookHandler = (...args: unknown[]) => Promise<unknown>
@@ -59,6 +62,7 @@ export interface User {
     username: string
     roles: string[]
     avatar?: string
+    bio?: string
     banned: boolean
 }
 
@@ -71,6 +75,28 @@ export interface RegisterBody {
 export interface LoginBody {
     username: string
     password: string
+}
+
+export interface MailMessage {
+    to: string | string[]
+    subject: string
+    text?: string
+    html?: string
+    cc?: string | string[]
+    bcc?: string | string[]
+    replyTo?: string
+    from?: string
+    headers?: Record<string, string>
+}
+
+export interface MailStatus {
+    configured: boolean
+    host: string
+    port: number
+    user: string
+    from: string
+    secure: boolean
+    hasPass: boolean
 }
 
 export interface Role {

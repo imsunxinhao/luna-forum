@@ -12,8 +12,6 @@ const twemoji = twemojiModule as unknown as Twemoji;
 
 const MONACO_BASE = '/static/monaco/min/vs';
 
-const PH_START = '\uE000';
-const PH_END = '\uE001';
 const DEBOUNCE_MS = 150;
 
 const inlineMath = {

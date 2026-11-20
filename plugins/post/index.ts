@@ -15,6 +15,14 @@ const postPlugin: Plugin = {
         ctx.registerPriv('delete_all', ['superuser'])
         ctx.registerPriv('view_all', ['superuser'])
 
+        // 社区互动：评论
+        ctx.registerPriv('comment_view', ['guest', 'default'])
+        ctx.registerPriv('comment_create', ['default'])
+        ctx.registerPriv('comment_edit_own', ['default'])
+        ctx.registerPriv('comment_delete_own', ['default'])
+        ctx.registerPriv('comment_edit_all', ['superuser'])
+        ctx.registerPriv('comment_delete_all', ['superuser'])
+
         const server = ctx.kernel.getServer()
         setupPostRoutes(server, ctx.kernel)
     },

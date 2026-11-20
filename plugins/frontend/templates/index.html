@@ -1,6 +1,109 @@
 {% extends "layout.html" %}
 {% block ext_script %}{% endblock %}
 {% block page_content %}
-<!-- Todo -->
+<div class="lf-section lf-section-7-3 lf-feed">
+    <div class="lf-feed-main">
+        <div class="lf-feed-header">
+            <div>
+                <h2 class="lf-feed-title">{% if activeTag %}{{ activeTag.name }}{% else %}{{ 'home.latest' | _ }}{% endif %}</h2>
+                <p class="lf-feed-subtitle">{{ 'home.subtitle' | _ }}</p>
+            </div>
+            {% if canCreatePost %}
+            <fluent-button appearance="accent" class="lf-new-post-btn" onclick="location.href='/post/new'">
+                <iconify-icon icon="fluent:add-24-regular" slot="start"></iconify-icon>
+                {{ 'post.newPost' | _ }}
+            </fluent-button>
+            {% endif %}
+        </div>
 
+        {% if posts|length == 0 %}
+        <div class="lf-card lf-empty-state">
+            <iconify-icon icon="fluent:chat-24-regular" class="lf-empty-icon"></iconify-icon>
+            <p>{{ 'home.noPosts' | _ }}</p>
+            {% if canCreatePost %}
+            <fluent-button appearance="accent" onclick="location.href='/post/new'">{{ 'post.newPost' | _ }}</fluent-button>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="lf-feed-list">
+            {% for post in posts %}
+            <article class="lf-post-card">
+                <div class="lf-post-card-head">
+                    {% if post.pinned %}
+                    <span class="lf-pin-badge">
+                        <iconify-icon icon="fluent:pin-24-filled"></iconify-icon>{{ 'home.pinned' | _ }}
+                    </span>
+                    {% endif %}
+                    <a class="lf-post-card-title" href="/post/{{ post.id }}">{{ post.title }}</a>
+                </div>
+                {% if post.excerpt %}
+                <p class="lf-post-card-excerpt">{{ post.excerpt }}</p>
+                {% endif %}
+                <div class="lf-post-card-meta">
+                    {% if post.author %}
+                    <a class="lf-author-link" href="/user/{{ post.author.uid }}">
+                        <fluent-avatar data-color="neutral" class="lf-avatar-sm"
+                            {% if not post.author.avatar %}initials="{{ post.author.username[0]|upper }}"{% endif %}>
+                            {% if post.author.avatar %}<img src="{{ post.author.avatar }}" alt="{{ post.author.username }}">{% endif %}
+                        </fluent-avatar>
+                        <span>{{ post.author.username }}</span>
+                    </a>
+                    <span class="lf-dot">·</span>
+                    {% endif %}
+                    <span class="lf-time">{{ post.createdAt | timeago }}</span>
+                    {% if post.tag %}
+                    <a class="lf-tag-chip" href="/?tagId={{ post.tag.id }}">{{ post.tag.name }}</a>
+                    {% endif %}
+                    <a class="lf-comment-count" href="/post/{{ post.id }}#comments">
+                        <iconify-icon icon="fluent:comment-24-regular"></iconify-icon>
+                        <span>{{ post.commentCount }}</span>
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        {% if totalPages > 1 %}
+        <nav class="lf-pagination">
+            {% if page > 1 %}
+            <a class="lf-page-link" href="/?page={{ page - 1 }}{% if tagId %}&tagId={{ tagId }}{% endif %}">
+                <iconify-icon icon="fluent:chevron-left-24-regular"></iconify-icon>{{ 'home.prev' | _ }}
+            </a>
+            {% endif %}
+            <span class="lf-page-info">{{ page }} / {{ totalPages }}</span>
+            {% if page < totalPages %}
+            <a class="lf-page-link" href="/?page={{ page + 1 }}{% if tagId %}&tagId={{ tagId }}{% endif %}">
+                {{ 'home.next' | _ }}<iconify-icon icon="fluent:chevron-right-24-regular"></iconify-icon>
+            </a>
+            {% endif %}
+        </nav>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <aside class="lf-feed-side">
+        <section class="lf-card lf-about-card">
+            <h3 class="lf-side-title">{{ 'home.about' | _ }}</h3>
+            <p>{{ 'home.aboutText' | _ }}</p>
+        </section>
+        <section class="lf-card lf-tag-panel">
+            <h3 class="lf-side-title">{{ 'home.tags' | _ }}</h3>
+            <ul class="lf-tag-list">
+                <li class="lf-tag-item{% if not tagId %} is-active{% endif %}">
+                    <a href="/">
+                        <span class="lf-tag-name">{{ 'home.allTags' | _ }}</span>
+                    </a>
+                </li>
+                {% for tag in tags %}
+                <li class="lf-tag-item{% if tagId == tag.id %} is-active{% endif %}">
+                    <a href="/?tagId={{ tag.id }}">
+                        <span class="lf-tag-name">{{ tag.name }}</span>
+                        <span class="lf-tag-count">{{ tag.postCount }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+    </aside>
+</div>
 {% endblock %}

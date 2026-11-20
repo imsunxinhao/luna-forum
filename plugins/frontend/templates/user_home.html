@@ -5,8 +5,8 @@
     <div class="lf-user-header-overlay"></div>
     <div class="lf-user-header-content">
         <div class="lf-user-avatar-lg">
-            <fluent-avatar data-color="neutral" class="lf-avatar" {% if not user_doc.avatar %}
-                initials="{{ user_doc.username[0]|upper }}" {% endif %}>
+            <fluent-avatar data-color="neutral" class="lf-avatar"
+                {% if not user_doc.avatar %}initials="{{ user_doc.username[0]|upper }}"{% endif %}>
                 {% if user_doc.avatar %}
                 <img src="{{ user_doc.avatar }}" alt="{{ user_doc.username }}">
                 {% endif %}
@@ -14,6 +14,9 @@
         </div>
         <div class="lf-user-header-info">
             <h1 class="lf-home-username">{{ user_doc.username }}</h1>
+            {% if user_doc.bio %}
+            <p class="lf-user-bio">{{ user_doc.bio }}</p>
+            {% endif %}
             <div class="lf-user-meta">
                 <span>UID: {{ user_doc.uid }}</span>
                 <span>{{ 'user.registered' | _ }} {{ user_doc.createdAt | timeago }}</span>
@@ -25,11 +28,126 @@
                 {% endif %}
             </div>
         </div>
-        <div class="lf-user-actions">
-            <iconify-icon icon="fluent:mail-24-regular" title="{{ 'user.message' | _ }}"></iconify-icon>
-            <iconify-icon icon="fluent:alert-24-regular" title="{{ 'user.notify' | _ }}"></iconify-icon>
-        </div>
     </div>
 </div>
+
+<nav class="lf-user-tabs">
+    <a class="lf-user-tab{% if activeTab == 'posts' %} is-active{% endif %}" href="/user/{{ uid }}?tab=posts">
+        {{ 'user.tabPosts' | _ }} <span class="lf-tab-count">{{ stats.posts }}</span>
+    </a>
+    <a class="lf-user-tab{% if activeTab == 'comments' %} is-active{% endif %}" href="/user/{{ uid }}?tab=comments">
+        {{ 'user.tabComments' | _ }} <span class="lf-tab-count">{{ stats.comments }}</span>
+    </a>
+</nav>
+
+<div class="lf-section lf-section-7-3 lf-user-body">
+    <div class="lf-user-main">
+        {% if activeTab == 'posts' %}
+            {% if posts|length == 0 %}
+            <div class="lf-card lf-empty-state">
+                <iconify-icon icon="fluent:document-24-regular" class="lf-empty-icon"></iconify-icon>
+                <p>{{ 'user.noPosts' | _ }}</p>
+            </div>
+            {% else %}
+            <div class="lf-feed-list">
+                {% for post in posts %}
+                <article class="lf-post-card">
+                    <div class="lf-post-card-head">
+                        {% if post.pinned %}
+                        <span class="lf-pin-badge">
+                            <iconify-icon icon="fluent:pin-24-filled"></iconify-icon>{{ 'home.pinned' | _ }}
+                        </span>
+                        {% endif %}
+                        <a class="lf-post-card-title" href="/post/{{ post.id }}">{{ post.title }}</a>
+                    </div>
+                    {% if post.excerpt %}
+                    <p class="lf-post-card-excerpt">{{ post.excerpt }}</p>
+                    {% endif %}
+                    <div class="lf-post-card-meta">
+                        <span class="lf-time">{{ post.createdAt | timeago }}</span>
+                        {% if post.tag %}
+                        <a class="lf-tag-chip" href="/?tagId={{ post.tag.id }}">{{ post.tag.name }}</a>
+                        {% endif %}
+                        <a class="lf-comment-count" href="/post/{{ post.id }}#comments">
+                            <iconify-icon icon="fluent:comment-24-regular"></iconify-icon>
+                            <span>{{ post.commentCount }}</span>
+                        </a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% else %}
+            {% if comments|length == 0 %}
+            <div class="lf-card lf-empty-state">
+                <iconify-icon icon="fluent:comment-24-regular" class="lf-empty-icon"></iconify-icon>
+                <p>{{ 'user.noComments' | _ }}</p>
+            </div>
+            {% else %}
+            <div class="lf-user-comment-list">
+                {% for comment in comments %}
+                <a class="lf-user-comment" href="/post/{{ comment.postId }}#comment-{{ comment.id }}">
+                    <div class="lf-user-comment-context">
+                        {{ 'user.commentsOn' | _ }}
+                        <span class="lf-user-comment-post">{{ comment.postTitle }}</span>
+                    </div>
+                    <div class="lf-user-comment-body">{{ comment.content }}</div>
+                    <div class="lf-user-comment-meta">
+                        <span class="lf-time">{{ comment.createdAt | timeago }}</span>
+                        {% if comment.edited %}<span class="lf-edited">{{ 'post.edited' | _ }}</span>{% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endif %}
+
+        {% if totalPages > 1 %}
+        <nav class="lf-pagination">
+            {% if page > 1 %}
+            <a class="lf-page-link" href="/user/{{ uid }}?tab={{ activeTab }}&page={{ page - 1 }}">
+                <iconify-icon icon="fluent:chevron-left-24-regular"></iconify-icon>{{ 'home.prev' | _ }}
+            </a>
+            {% endif %}
+            <span class="lf-page-info">{{ page }} / {{ totalPages }}</span>
+            {% if page < totalPages %}
+            <a class="lf-page-link" href="/user/{{ uid }}?tab={{ activeTab }}&page={{ page + 1 }}">
+                {{ 'home.next' | _ }}<iconify-icon icon="fluent:chevron-right-24-regular"></iconify-icon>
+            </a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </div>
+
+    <aside class="lf-user-sidebar">
+        <section class="lf-card lf-stat-row lf-stat-row-2">
+            <div class="lf-stat-item">
+                <div class="lf-stat-value">{{ stats.posts }}</div>
+                <div class="lf-stat-label">{{ 'user.statPosts' | _ }}</div>
+            </div>
+            <div class="lf-stat-item">
+                <div class="lf-stat-value">{{ stats.comments }}</div>
+                <div class="lf-stat-label">{{ 'user.statComments' | _ }}</div>
+            </div>
+        </section>
+
+        <section class="lf-card lf-tag-panel">
+            <h3 class="lf-side-title">{{ 'user.tagsTitle' | _ }}</h3>
+            {% if tags|length == 0 %}
+            <p class="lf-muted">{{ 'user.noPosts' | _ }}</p>
+            {% else %}
+            <ul class="lf-tag-list">
+                {% for tag in tags %}
+                <li class="lf-tag-item">
+                    <a href="/?tagId={{ tag.id }}">
+                        <span class="lf-tag-name">{{ tag.name }}</span>
+                        <span class="lf-tag-count">{{ tag.postCount }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </section>
+    </aside>
 </div>
 {% endblock %}

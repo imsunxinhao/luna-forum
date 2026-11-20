@@ -938,3 +938,619 @@ body.md-dark {
 .lf-comment-send-wrapper.lf-comment-send-active {
     display: block;
 }
+
+/* ============================================================
+   社区：首页帖子流 / 帖子卡片 / 标签
+   ============================================================ */
+.lf-feed {
+    align-items: start;
+}
+
+.lf-feed-main,
+.lf-feed-side,
+.lf-user-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.lf-feed-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.lf-feed-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--lf-t);
+}
+
+.lf-feed-subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--lf-ts);
+}
+
+.lf-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lf-post-card {
+    display: block;
+    background: var(--lf-s);
+    border: 1px solid var(--lf-b);
+    border-radius: 10px;
+    padding: 20px 24px;
+    text-decoration: none;
+    transition: border-color .2s, background .2s;
+}
+
+.lf-post-card:hover {
+    border-color: var(--lf-p);
+}
+
+.lf-post-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.lf-post-card-title {
+    color: var(--lf-t);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.45;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.lf-post-card-title:hover {
+    color: var(--lf-p);
+}
+
+.lf-post-card-excerpt {
+    margin: 8px 0 0;
+    color: var(--lf-ts);
+    font-size: 14px;
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.lf-post-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--lf-ts);
+}
+
+.lf-author-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--lf-ts);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.lf-author-link:hover {
+    color: var(--lf-p);
+}
+
+.lf-avatar-sm {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.lf-avatar-sm::part(root) {
+    width: 24px;
+    height: 24px;
+}
+
+.lf-dot {
+    color: var(--lf-ts);
+}
+
+.lf-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--lf-h);
+    color: var(--lf-p);
+    font-size: 12px;
+    line-height: 1.6;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.lf-tag-chip:hover {
+    background: var(--lf-al);
+}
+
+.lf-comment-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--lf-ts);
+    text-decoration: none;
+    margin-left: auto;
+}
+
+.lf-comment-count:hover {
+    color: var(--lf-p);
+}
+
+.lf-pin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--lf-al);
+    color: var(--lf-p);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.lf-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--lf-ts);
+}
+
+.lf-empty-state p {
+    margin: 0;
+    font-size: 15px;
+}
+
+.lf-empty-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: .65;
+}
+
+.lf-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.lf-page-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border: 1px solid var(--lf-b);
+    border-radius: 8px;
+    background: var(--lf-s);
+    color: var(--lf-t);
+    font-size: 14px;
+    text-decoration: none;
+    transition: border-color .2s, color .2s;
+}
+
+.lf-page-link:hover {
+    border-color: var(--lf-p);
+    color: var(--lf-p);
+}
+
+.lf-page-info {
+    font-size: 13px;
+    color: var(--lf-ts);
+    font-variant-numeric: tabular-nums;
+}
+
+.lf-side-title {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--lf-t);
+}
+
+.lf-about-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--lf-ts);
+}
+
+.lf-muted {
+    color: var(--lf-ts);
+    font-size: 13px;
+}
+
+.lf-tag-panel .lf-tag-item a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 2px 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.lf-tag-item.is-active .lf-tag-name {
+    color: var(--lf-p);
+    font-weight: 600;
+}
+
+.lf-tag-item:hover .lf-tag-name {
+    color: var(--lf-p);
+}
+
+/* ============================================================
+   社区：用户主页
+   ============================================================ */
+.lf-user-bio {
+    margin: 4px 0 8px;
+    max-width: 640px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, .92);
+}
+
+.lf-user-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 12px;
+    margin-bottom: 16px;
+    background: var(--lf-s);
+    border: 1px solid var(--lf-b);
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.lf-user-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 18px;
+    color: var(--lf-t);
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: border-color .2s, color .2s;
+}
+
+.lf-user-tab:hover {
+    color: var(--lf-p);
+    background: transparent;
+}
+
+.lf-user-tab.is-active {
+    border-bottom-color: var(--lf-p);
+    color: var(--lf-p);
+    font-weight: 600;
+    background: transparent;
+}
+
+.lf-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--lf-h);
+    color: var(--lf-ts);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.lf-stat-row-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.lf-user-comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lf-user-comment {
+    display: block;
+    padding: 16px 20px;
+    background: var(--lf-s);
+    border: 1px solid var(--lf-b);
+    border-radius: 10px;
+    color: var(--lf-t);
+    text-decoration: none;
+    transition: border-color .2s;
+}
+
+.lf-user-comment:hover {
+    border-color: var(--lf-p);
+}
+
+.lf-user-comment-context {
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--lf-ts);
+}
+
+.lf-user-comment-post {
+    color: var(--lf-p);
+    font-weight: 600;
+}
+
+.lf-user-comment-body {
+    margin-bottom: 8px;
+    font-size: 15px;
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.lf-user-comment-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--lf-ts);
+}
+
+/* ============================================================
+   社区：评论互动
+   ============================================================ */
+.lf-comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 2px;
+}
+
+.lf-comment-action {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--lf-ts);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.lf-comment-action:hover {
+    color: var(--lf-p);
+}
+
+.lf-comment-action-danger:hover {
+    color: #d13438;
+}
+
+.lf-comment-reply-to {
+    font-size: 12px;
+    color: var(--lf-p);
+}
+
+.lf-comment-reply {
+    width: calc(100% - 48px);
+    margin-left: 48px;
+    padding-left: 16px;
+    border-left: 2px solid var(--lf-b);
+}
+
+.lf-comment-deleted {
+    color: var(--lf-ts);
+    font-style: italic;
+}
+
+.lf-comment-reply-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: var(--lf-h);
+    color: var(--lf-ts);
+    font-size: 13px;
+}
+
+.lf-comment-reply-bar[hidden] {
+    display: none;
+}
+
+.lf-comment-reply-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.lf-comment-send-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.lf-link-btn {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--lf-ts);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.lf-link-btn:hover {
+    color: var(--lf-p);
+}
+
+.lf-link-btn-primary {
+    color: var(--lf-p);
+    font-weight: 600;
+}
+
+.lf-comment-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lf-comment-edit-input {
+    min-height: 100px;
+}
+
+.lf-comment-edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.lf-comment-login .lf-post-content {
+    color: var(--lf-ts);
+    font-size: 14px;
+}
+
+.lf-comment .lf-post-meta a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.lf-comment .lf-post-meta a:hover {
+    color: var(--lf-p);
+}
+
+/* ============================================================
+   社区：发帖 / 编辑帖子
+   ============================================================ */
+.lf-post-editor-page {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto 24px;
+}
+
+.lf-editor-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.lf-editor-heading {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--lf-t);
+}
+
+.lf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lf-field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--lf-ts);
+}
+
+.lf-field fluent-text-input,
+.lf-field fluent-dropdown {
+    width: 100%;
+}
+
+.lf-editor-meta {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.lf-field-inline {
+    flex: 0 1 320px;
+    min-width: 220px;
+}
+
+.lf-checkbox {
+    padding-bottom: 10px;
+    color: var(--lf-t);
+    font-size: 14px;
+}
+
+.lf-hidden-textarea {
+    display: none;
+}
+
+.lf-post-editor {
+    min-height: 300px;
+    border: 1px solid var(--lf-b);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--lf-s);
+}
+
+.lf-editor-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.lf-danger-button {
+    --colorNeutralForeground1: #d13438;
+}
+
+article.lf-post.lf-post-main {
+    padding: 24px;
+    border: 1px solid var(--lf-b);
+    border-radius: 10px;
+    background: var(--lf-s);
+}
+
+@media (max-width: 768px) {
+    .lf-post-card {
+        padding: 16px;
+    }
+
+    article.lf-post.lf-post-main {
+        padding: 16px;
+    }
+
+    .lf-comment-reply {
+        width: calc(100% - 16px);
+        margin-left: 16px;
+        padding-left: 10px;
+    }
+
+    .lf-editor-meta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .lf-field-inline {
+        flex: 1 1 auto;
+    }
+
+    .lf-comment-count {
+        margin-left: 0;
+    }
+}

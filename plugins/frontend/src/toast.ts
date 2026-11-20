@@ -114,7 +114,7 @@ function attach_drag_handler(toast_element: ToastElement): () => void {
         toast_element.classList.remove("lf-toast-animating");
         try {
             toast_element.releasePointerCapture(event.pointerId);
-        } catch (_) { }
+        } catch { }
 
         const translate_x = toast_element._translate_x || current_x || 0;
         const opacity = toast_element._opacity ?? 1;
@@ -153,7 +153,7 @@ function attach_drag_handler(toast_element: ToastElement): () => void {
         toast_element.classList.remove("lf-toast-animating");
         try {
             toast_element.releasePointerCapture(event.pointerId);
-        } catch (_) { }
+        } catch { }
 
         const translate_x = toast_element._translate_x || 0;
         const opacity = toast_element._opacity ?? 1;

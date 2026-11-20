@@ -1,30 +1,20 @@
-import { Db, ObjectId } from 'mongodb';
+import { Db, ObjectId, UpdateFilter, Document } from 'mongodb';
 import { KernelAPI } from '../../src/types.js';
-import { Post, PostSchema } from './types.js';
+import { Post } from './types.js';
 import { Static, StaticDecode, Type } from '@sinclair/typebox'
 import { FastifyInstance } from 'fastify';
 import { ErrorBase as ErrorBaseType, ErrorBaseSchema } from '../../src/schema.js';
+import { buildVisibilityFilter, canViewPost, VISIBILITY_PUBLIC } from './access.js';
+import { buildCommentTree, CommentDoc, getCommentView, syncCommentCount } from './comments.js';
 
-const VISIBILITY_PUBLIC = 0;
-const VISIBILITY_HIDDEN = 2;
-
-async function canViewPost(db: Db, post: Post, userId: number, kernel: KernelAPI) {
-    if (!post) return false;
-    if (await kernel.hasPriv(userId, 'post:view_all')) return true;
-    if (post.authorId === userId) return true;
-    if (post.visibility === VISIBILITY_PUBLIC || post.visibility === undefined) return true;
-    return false;
+function parseObjectId(value: string): ObjectId | null {
+    return ObjectId.isValid(value) ? new ObjectId(value) : null;
 }
 
-function buildVisibilityFilter(userId: number, canView: boolean) {
-    if (canView) return {};
-    return {
-        $or: [
-            { visibility: VISIBILITY_PUBLIC },
-            { visibility: { $exists: false } },
-            { authorId: userId }
-        ]
-    };
+async function findComment(db: Db, id: string): Promise<CommentDoc | null> {
+    const oid = parseObjectId(id);
+    if (!oid) return null;
+    return await db.collection<CommentDoc>('comments').findOne({ _id: oid });
 }
 
 export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
@@ -34,7 +24,11 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         tagId: Type.Optional(Type.String())
     })
     const listReplySchema = Type.Object({
-        posts: Type.Array(Type.Any())
+        posts: Type.Array(Type.Any()),
+        total: Type.Number(),
+        page: Type.Number(),
+        limit: Type.Number(),
+        totalPages: Type.Number()
     })
     server.get<{
         Querystring: Static<typeof listQuerySchema>,
@@ -58,7 +52,7 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
             const skip = (page - 1) * limit;
             const posts = await db.collection('posts')
                 .find(filter)
-                .sort({ createdAt: -1 })
+                .sort({ pinned: -1, pinnedAt: -1, createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
                 .toArray();
@@ -75,6 +69,9 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
             let result = {
                 posts: posts,
                 total,
+                page,
+                limit,
+                totalPages: Math.max(1, Math.ceil(total / limit))
             };
             for (const e of enriched) {
                 if (e && typeof e === 'object')
@@ -86,7 +83,7 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
 
     const getParamSchema = Type.Object({ id: Type.String() })
     const getReplySchema = Type.Object({
-        post: PostSchema
+        post: Type.Any()
     })
     server.get<{
         Params: Static<typeof getParamSchema>,
@@ -102,13 +99,17 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         }
     }, async (request, reply) => {
         const { id } = request.params;
+        const oid = parseObjectId(id);
+        if (!oid) {
+            return reply.code(404).send({ message: 'Post not found' });
+        }
         const userId = kernel.getUserIdFromRequest(request);
         const db = kernel.getDB();
         await kernel.callHook('post:beforeView', { id, userId });
         const post = await db
             .collection('posts')
             .findOne({
-                _id: new ObjectId(id)
+                _id: oid
             }) as Post | null;
         if (!post) {
             return reply.code(404).send({
@@ -116,7 +117,8 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
             }
             );
         }
-        if (!(await canViewPost(db, post, userId, kernel))) {
+        const canViewAll = await kernel.hasPriv(userId, 'post:view_all');
+        if (!canViewPost(post, userId, canViewAll)) {
             return reply.code(403).send({
                 message: 'No permission to view post'
             });
@@ -130,8 +132,8 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
     });
 
     const createBodySchema = Type.Object({
-        title: Type.String(),
-        content: Type.String(),
+        title: Type.String({ minLength: 1, maxLength: 200 }),
+        content: Type.String({ minLength: 1, maxLength: 100000 }),
         tagId: Type.Optional(Type.String()),
         visibility: Type.Optional(Type.Number())
     })
@@ -149,24 +151,25 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         if (!canCreate) {
             return reply.code(403).send({ success: false, error: 'No permission to create post' });
         }
-        if (visibility === VISIBILITY_HIDDEN && !(await kernel.hasPriv(userId, 'post:view_all'))) {
-            return reply.code(403).send({ success: false, error: 'Cannot create hidden post' });
+        const canHide = await kernel.hasPriv(userId, 'post:view_all');
+        if (visibility !== undefined && !canHide && visibility !== VISIBILITY_PUBLIC) {
+            return reply.code(403).send({ success: false, error: 'Cannot create non-public post' });
         }
-        const finalVisibility = (
-            visibility === VISIBILITY_HIDDEN
-            && !(await kernel.hasPriv(userId, 'post:view_all'))
-        )
-            ? VISIBILITY_PUBLIC
-            : visibility ?? VISIBILITY_PUBLIC;
+        const finalVisibility = visibility ?? VISIBILITY_PUBLIC;
+        const now = new Date().toISOString();
         const post: Post = {
             title,
             content,
             authorId: userId,
             visibility: finalVisibility,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            createdAt: now,
+            updatedAt: now,
+            commentCount: 0
         };
         if (tagId) {
+            if (!ObjectId.isValid(tagId)) {
+                return reply.code(400).send({ success: false, error: 'Invalid tag id' });
+            }
             const tag = await db
                 .collection('tags')
                 .findOne({ _id: new ObjectId(tagId) });
@@ -184,28 +187,38 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         for (const e of enriched) {
             if (e && typeof e === 'object') finalResult = { ...finalResult, ...e };
         }
-        return reply.code(201).send({ post: finalResult });
+        return reply.code(201).send({ success: true, post: finalResult });
     });
 
     const replaceParamsSchema = Type.Object({
         id: Type.String()
     })
+    const updateBodySchema = Type.Object({
+        title: Type.Optional(Type.String({ minLength: 1, maxLength: 200 })),
+        content: Type.Optional(Type.String({ minLength: 1, maxLength: 100000 })),
+        tagId: Type.Optional(Type.String()),
+        visibility: Type.Optional(Type.Number())
+    })
     server.put<{
-        Body: Post,
+        Body: Static<typeof updateBodySchema>,
         Params: Static<typeof replaceParamsSchema>
     }>('/api/v1/post/:id', {
         schema: {
-            body: PostSchema,
+            body: updateBodySchema,
             params: replaceParamsSchema
         }
     }, async (request, reply) => {
         const { id } = request.params;
-        const { title, content, visibility } = request.body;
+        const { title, content, tagId, visibility } = request.body;
         const userId = kernel.getUserIdFromRequest(request);
         const db = kernel.getDB();
+        const oid = parseObjectId(id);
+        if (!oid) {
+            return reply.code(404).send({ success: false, error: 'Post not found' });
+        }
         const oldPost = await db
             .collection('posts')
-            .findOne({ _id: new ObjectId(id) });
+            .findOne({ _id: oid });
         if (!oldPost) {
             return reply.code(404).send({ success: false, error: 'Post not found' });
         }
@@ -216,15 +229,31 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         if (!canEdit) {
             return reply.code(403).send({ success: false, error: 'No permission to edit this post' });
         }
-        const isAdmin = await kernel.hasPriv(userId, 'post:edit_all');
-        if (visibility !== undefined && !isAdmin && visibility === VISIBILITY_HIDDEN) {
-            return reply.code(403).send({ success: false, error: 'Cannot set post to hidden' });
+        const canHide = await kernel.hasPriv(userId, 'post:view_all');
+        if (visibility !== undefined && !canHide && visibility !== VISIBILITY_PUBLIC) {
+            return reply.code(403).send({ success: false, error: 'Cannot set post to non-public' });
+        }
+        const now = new Date().toISOString();
+        const set: Record<string, unknown> = { updatedAt: now };
+        const unset: Record<string, unknown> = {};
+        if (title !== undefined) set.title = title;
+        if (content !== undefined) set.content = content;
+        if (visibility !== undefined) set.visibility = visibility;
+        if (tagId !== undefined) {
+            if (tagId === '') {
+                unset.tagId = '';
+            } else {
+                if (!ObjectId.isValid(tagId)) {
+                    return reply.code(400).send({ success: false, error: 'Invalid tag id' });
+                }
+                const tag = await db.collection('tags').findOne({ _id: new ObjectId(tagId) });
+                if (!tag) {
+                    return reply.code(400).send({ success: false, error: 'Tag not found' });
+                }
+                set.tagId = tagId;
+            }
         }
         await kernel.callHook('post:beforeEdit', { id, title, content, visibility, userId, oldPost });
-        const update: Partial<Post> = { updatedAt: new Date().toISOString() };
-        if (title !== undefined) update.title = title;
-        if (content !== undefined) update.content = content;
-        if (visibility !== undefined) update.visibility = visibility;
         if (content !== undefined && content !== oldPost.content) {
             await db.collection('post_edits').insertOne({
                 postId: id,
@@ -234,15 +263,19 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
                 editedAt: new Date()
             });
         }
+        const update: UpdateFilter<Document> = { $set: set };
+        if (Object.keys(unset).length > 0) update.$unset = unset;
         const result = await db.collection('posts').updateOne(
-            { _id: new ObjectId(id) },
-            { $set: update }
+            { _id: oid },
+            update
         );
-        if (result.modifiedCount === 0) {
+        if (result.modifiedCount === 0 && result.matchedCount === 0) {
             return reply.code(404).send({ success: false, error: 'Post not found or not authorized' });
         }
-        await kernel.callHook('post:afterEdit', { id, title, content, visibility, userId });
-        return { success: true, modified: true };
+        const newPost: Record<string, unknown> = { ...oldPost, ...set };
+        if (unset.tagId !== undefined) delete newPost.tagId;
+        await kernel.callHook('post:afterEdit', { id, title, content, visibility, userId, oldPost, newPost });
+        return { success: true, modified: true, post: newPost };
     });
 
     const getEditsParamsSchema = Type.Object({
@@ -256,15 +289,20 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         }
     }, async (request, reply) => {
         const { id } = request.params;
+        const oid = parseObjectId(id);
+        if (!oid) {
+            return reply.code(404).send({ success: false, error: 'Post not found' });
+        }
         const userId = kernel.getUserIdFromRequest(request);
         const db = kernel.getDB();
         const post = await db
             .collection('posts')
-            .findOne({ _id: new ObjectId(id) }) as Post | null;
+            .findOne({ _id: oid }) as Post | null;
         if (!post) {
             return reply.code(404).send({ success: false, error: 'Post not found' });
         }
-        if (!(await canViewPost(db, post, userId, kernel))) {
+        const canViewAll = await kernel.hasPriv(userId, 'post:view_all');
+        if (!canViewPost(post, userId, canViewAll)) {
             return reply.code(403).send({ success: false, error: 'No permission to view post' });
         }
         const edits = await db.collection('post_edits')
@@ -289,11 +327,15 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         }
     }, async (request, reply) => {
         const { id } = request.params;
+        const oid = parseObjectId(id);
+        if (!oid) {
+            return reply.code(404).send({ success: false, error: 'Post not found' });
+        }
         const userId = kernel.getUserIdFromRequest(request);
         const db = kernel.getDB();
         const post = await db
             .collection('posts')
-            .findOne({ _id: new ObjectId(id) });
+            .findOne({ _id: oid });
         if (!post) {
             return reply.code(404).send({ success: false, error: 'Post not found' });
         }
@@ -305,22 +347,72 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
             return reply.code(403).send({ success: false, error: 'No permission to delete this post' });
         }
         await kernel.callHook('post:beforeDelete', post);
-        const result = await db.collection('posts').deleteOne({ _id: new ObjectId(id) });
+        const result = await db.collection('posts').deleteOne({ _id: oid });
         if (result.deletedCount === 0) {
             return reply.code(404).send({ success: false, error: 'Post not found' });
         }
+        await db.collection('comments').deleteMany({ postId: id });
+        await db.collection('post_edits').deleteMany({ postId: id });
         await kernel.callHook('post:afterDelete', post);
         return reply.code(204).send();
     });
 
     // ------------------------------------------------------------------
-    // 评论创建
+    // 评论
     // ------------------------------------------------------------------
+
+    const commentsQuerySchema = Type.Object({
+        page: Type.Optional(Type.Number({ minimum: 1, default: 1 })),
+        limit: Type.Optional(Type.Number({ minimum: 1, default: 50 }))
+    })
+    server.get<{
+        Params: Static<typeof getParamSchema>,
+        Querystring: Static<typeof commentsQuerySchema>
+    }>('/api/v1/post/:id/comments', {
+        schema: {
+            params: getParamSchema,
+            querystring: commentsQuerySchema
+        }
+    }, async (request, reply) => {
+        const { id } = request.params;
+        const oid = parseObjectId(id);
+        if (!oid) {
+            return reply.code(404).send({ success: false, error: 'Post not found' });
+        }
+        const userId = kernel.getUserIdFromRequest(request);
+        const db = kernel.getDB();
+        const canViewAll = await kernel.hasPriv(userId, 'post:view_all');
+        const post = await db.collection('posts').findOne({ _id: oid }) as Post | null;
+        if (!post) {
+            return reply.code(404).send({ success: false, error: 'Post not found' });
+        }
+        if (!canViewPost(post, userId, canViewAll)) {
+            return reply.code(403).send({ success: false, error: 'No permission to view this post' });
+        }
+        const [canEditOwn, canDeleteOwn, canEditAll, canDeleteAll] = await Promise.all([
+            kernel.hasPriv(userId, 'post:comment_edit_own'),
+            kernel.hasPriv(userId, 'post:comment_delete_own'),
+            kernel.hasPriv(userId, 'post:comment_edit_all'),
+            kernel.hasPriv(userId, 'post:comment_delete_all')
+        ]);
+        const page = await buildCommentTree(db, id, {
+            page: request.query.page,
+            limit: request.query.limit,
+            viewerId: userId,
+            canEditOwn,
+            canDeleteOwn,
+            canEditAll,
+            canDeleteAll
+        });
+        return { success: true, ...page };
+    });
+
     const createCommentParamsSchema = Type.Object({
         id: Type.String()
     });
     const createCommentBodySchema = Type.Object({
-        content: Type.String({ minLength: 1 })
+        content: Type.String({ minLength: 1, maxLength: 20000 }),
+        parentId: Type.Optional(Type.String())
     });
 
     server.post<{
@@ -333,7 +425,7 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         }
     }, async (request, reply) => {
         const { id } = request.params;
-        const { content } = request.body;
+        const { content, parentId } = request.body;
         const userId = kernel.getUserIdFromRequest(request);
 
         if (!userId) {
@@ -345,36 +437,160 @@ export function setupPostRoutes(server: FastifyInstance, kernel: KernelAPI) {
         }
 
         const db = kernel.getDB();
-
-        let postId: ObjectId;
-        try {
-            postId = new ObjectId(id);
-        } catch {
+        const oid = parseObjectId(id);
+        if (!oid) {
             return reply.code(400).send({ success: false, error: 'Invalid post id' });
         }
 
-        const post = await db.collection('posts').findOne({ _id: postId }) as Post | null;
+        const post = await db.collection('posts').findOne({ _id: oid }) as Post | null;
         if (!post) {
             return reply.code(404).send({ success: false, error: 'Post not found' });
         }
-        if (!(await canViewPost(db, post, userId, kernel))) {
+        const canViewAll = await kernel.hasPriv(userId, 'post:view_all');
+        if (!canViewPost(post, userId, canViewAll)) {
             return reply.code(403).send({ success: false, error: 'No permission to comment on this post' });
         }
+        const canComment = await kernel.hasPriv(userId, 'post:comment_create');
+        if (!canComment) {
+            return reply.code(403).send({ success: false, error: 'No permission to comment' });
+        }
 
-        const comment = {
+        let rootId: string | undefined;
+        let replyToId: string | undefined;
+        if (parentId) {
+            const parent = await findComment(db, parentId);
+            if (!parent || parent.postId !== id) {
+                return reply.code(404).send({ success: false, error: 'Parent comment not found' });
+            }
+            if (parent.deleted) {
+                return reply.code(400).send({ success: false, error: 'Cannot reply to a deleted comment' });
+            }
+            replyToId = parent._id.toString();
+            rootId = typeof parent.parentId === 'string' ? parent.parentId : replyToId;
+        }
+
+        const now = new Date().toISOString();
+        const comment: Record<string, unknown> = {
             postId: id,
             authorId: userId,
             content: trimmed,
-            createdAt: new Date().toISOString()
+            visibility: VISIBILITY_PUBLIC,
+            createdAt: now,
+            updatedAt: now
         };
+        if (rootId) comment.parentId = rootId;
+        if (replyToId) comment.replyToId = replyToId;
 
-        await kernel.callHook('comment:beforeCreate', comment);
+        const modified = await kernel.callHook('comment:beforeCreate', comment);
+        let finalComment = comment;
+        for (const e of modified) {
+            if (e && typeof e === 'object') finalComment = { ...finalComment, ...e };
+        }
 
-        const result = await db.collection('comments').insertOne(comment);
-        const created = { ...comment, _id: result.insertedId };
+        const result = await db.collection('comments').insertOne(finalComment);
+        await syncCommentCount(db, id);
 
-        await kernel.callHook('comment:afterCreate', created);
+        const created = { ...finalComment, _id: result.insertedId } as unknown as CommentDoc;
+        const view = await getCommentView(db, created, {
+            viewerId: userId,
+            canEditOwn: await kernel.hasPriv(userId, 'post:comment_edit_own'),
+            canDeleteOwn: await kernel.hasPriv(userId, 'post:comment_delete_own'),
+            canEditAll: await kernel.hasPriv(userId, 'post:comment_edit_all'),
+            canDeleteAll: await kernel.hasPriv(userId, 'post:comment_delete_all')
+        });
 
-        return reply.code(201).send({ success: true, comment: created });
+        await kernel.callHook('comment:afterCreate', view);
+
+        return reply.code(201).send({ success: true, comment: view });
+    });
+
+    const commentParamsSchema = Type.Object({
+        id: Type.String()
+    });
+    const updateCommentBodySchema = Type.Object({
+        content: Type.String({ minLength: 1, maxLength: 20000 })
+    });
+
+    server.put<{
+        Params: Static<typeof commentParamsSchema>,
+        Body: Static<typeof updateCommentBodySchema>
+    }>('/api/v1/comment/:id', {
+        schema: {
+            params: commentParamsSchema,
+            body: updateCommentBodySchema
+        }
+    }, async (request, reply) => {
+        const { id } = request.params;
+        const userId = kernel.getUserIdFromRequest(request);
+        const trimmed = request.body.content.trim();
+        if (!trimmed) {
+            return reply.code(400).send({ success: false, error: 'Empty content' });
+        }
+        const db = kernel.getDB();
+        const comment = await findComment(db, id);
+        if (!comment) {
+            return reply.code(404).send({ success: false, error: 'Comment not found' });
+        }
+        if (comment.deleted) {
+            return reply.code(400).send({ success: false, error: 'Cannot edit a deleted comment' });
+        }
+        const isOwner = comment.authorId === userId;
+        const canEdit = isOwner
+            ? await kernel.hasPriv(userId, 'post:comment_edit_own')
+            : await kernel.hasPriv(userId, 'post:comment_edit_all');
+        if (!canEdit) {
+            return reply.code(403).send({ success: false, error: 'No permission to edit this comment' });
+        }
+        const now = new Date().toISOString();
+        await kernel.callHook('comment:beforeEdit', { id, content: trimmed, userId, oldComment: comment });
+        await db.collection('comments').updateOne(
+            { _id: comment._id },
+            { $set: { content: trimmed, updatedAt: now, editedAt: now } }
+        );
+        const updated: CommentDoc = { ...comment, content: trimmed, updatedAt: now, editedAt: now };
+        const view = await getCommentView(db, updated, {
+            viewerId: userId,
+            canEditOwn: await kernel.hasPriv(userId, 'post:comment_edit_own'),
+            canDeleteOwn: await kernel.hasPriv(userId, 'post:comment_delete_own'),
+            canEditAll: await kernel.hasPriv(userId, 'post:comment_edit_all'),
+            canDeleteAll: await kernel.hasPriv(userId, 'post:comment_delete_all')
+        });
+        await kernel.callHook('comment:afterEdit', view);
+        return { success: true, comment: view };
+    });
+
+    server.delete<{
+        Params: Static<typeof commentParamsSchema>
+    }>('/api/v1/comment/:id', {
+        schema: {
+            params: commentParamsSchema
+        }
+    }, async (request, reply) => {
+        const { id } = request.params;
+        const userId = kernel.getUserIdFromRequest(request);
+        const db = kernel.getDB();
+        const comment = await findComment(db, id);
+        if (!comment) {
+            return reply.code(404).send({ success: false, error: 'Comment not found' });
+        }
+        if (comment.deleted) {
+            return { success: true, deleted: true, id };
+        }
+        const isOwner = comment.authorId === userId;
+        const canDelete = isOwner
+            ? await kernel.hasPriv(userId, 'post:comment_delete_own')
+            : await kernel.hasPriv(userId, 'post:comment_delete_all');
+        if (!canDelete) {
+            return reply.code(403).send({ success: false, error: 'No permission to delete this comment' });
+        }
+        const now = new Date().toISOString();
+        await kernel.callHook('comment:beforeDelete', comment, { userId });
+        await db.collection('comments').updateOne(
+            { _id: comment._id },
+            { $set: { deleted: true, deletedAt: now, updatedAt: now, content: '' } }
+        );
+        await syncCommentCount(db, comment.postId);
+        await kernel.callHook('comment:afterDelete', comment, { userId });
+        return { success: true, deleted: true, id };
     });
 }

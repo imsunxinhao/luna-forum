@@ -14,9 +14,9 @@ const tagPlugin: Plugin = {
         ctx.registerPriv('delete', ['superuser'])
         ctx.registerPriv('mod', ['superuser'])
 
-        ctx.registerHook('post:afterCreate', async (...args: unknown[]) => {
+        await ctx.registerHook('post:afterCreate', async (...args: unknown[]) => {
             const post = args[0] as Post
-            if (post.tagId) {
+            if (post.tagId && ObjectId.isValid(post.tagId)) {
                 const db = ctx.kernel.getDB()
                 await db.collection('tags').updateOne(
                     { _id: new ObjectId(post.tagId) },
@@ -25,9 +25,29 @@ const tagPlugin: Plugin = {
             }
         })
 
-        ctx.registerHook('post:afterDelete', async (...args: unknown[]) => {
+        await ctx.registerHook('post:afterEdit', async (...args: unknown[]) => {
+            const payload = args[0] as { oldPost?: Post; newPost?: Post }
+            const oldTagId = payload?.oldPost?.tagId
+            const newTagId = payload?.newPost?.tagId
+            if (oldTagId === newTagId) return
+            const db = ctx.kernel.getDB()
+            if (oldTagId && ObjectId.isValid(oldTagId)) {
+                await db.collection('tags').updateOne(
+                    { _id: new ObjectId(oldTagId) },
+                    { $inc: { postCount: -1 } }
+                )
+            }
+            if (newTagId && ObjectId.isValid(newTagId)) {
+                await db.collection('tags').updateOne(
+                    { _id: new ObjectId(newTagId) },
+                    { $inc: { postCount: 1 } }
+                )
+            }
+        })
+
+        await ctx.registerHook('post:afterDelete', async (...args: unknown[]) => {
             const post = args[0] as Post
-            if (post && post.tagId) {
+            if (post && post.tagId && ObjectId.isValid(post.tagId)) {
                 const db = ctx.kernel.getDB()
                 await db.collection('tags').updateOne(
                     { _id: new ObjectId(post.tagId) },

@@ -70,12 +70,15 @@ body {
     top: 0;
     bottom: 0;
     transform: translateX(-100%);
+    visibility: hidden;
     z-index: 1000;
     width: var(--lf-sw) !important;
+    transition: width .25s, transform .25s, visibility .25s;
 }
 
 .lf-sidebar.lf-mobile.lf-open {
     transform: translateX(0);
+    visibility: visible;
 }
 
 .lf-header {
@@ -95,10 +98,13 @@ body {
     overflow: hidden;
     opacity: 1;
     transition: opacity .3s;
+    color: inherit;
+    text-decoration: none;
 }
 
 .lf-collapsed .lf-logo {
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
 }
 
@@ -168,6 +174,22 @@ body {
     white-space: nowrap;
     overflow: hidden;
     gap: 12px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.lf-nav-item:focus-visible {
+    outline: 2px solid var(--lf-p);
+    outline-offset: -2px;
+}
+
+.lf-logo:focus-visible,
+.lf-user-link:focus-visible,
+.lf-toggle:focus-visible,
+.lf-menu-toggle:focus-visible {
+    outline: 2px solid var(--lf-p);
+    outline-offset: 2px;
+    border-radius: 6px;
 }
 
 .lf-nav-item iconify-icon {
@@ -205,9 +227,16 @@ body {
     transition: opacity .3s;
 }
 
+.lf-collapsed .lf-nav-item {
+    justify-content: center;
+    padding: 10px 0;
+}
+
 .lf-collapsed .lf-nav-label {
     opacity: 0;
     pointer-events: none;
+    width: 0;
+    overflow: hidden;
 }
 
 .lf-footer {
@@ -218,7 +247,7 @@ body {
 .lf-user {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     padding: 8px;
     white-space: nowrap;
     overflow: hidden;
@@ -226,8 +255,27 @@ body {
     transition: opacity .3s;
 }
 
+.lf-user-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.lf-user-link:hover .lf-user-name {
+    color: var(--lf-p);
+}
+
+.lf-user-menu {
+    flex-shrink: 0;
+}
+
 .lf-collapsed .lf-user {
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
     position: absolute;
 }
@@ -248,21 +296,46 @@ body {
 .lf-user-info {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     white-space: nowrap;
+    overflow: hidden;
 }
 
 .lf-user-name {
     font-size: 13px;
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lf-user-role {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-size: 11px;
     color: var(--lf-ts);
 }
 
-.lf-mini-avatar {
+.lf-mini-avatar-link {
     display: none;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    text-decoration: none;
+    border-radius: 50%;
+}
+
+.lf-mini-avatar-link:focus-visible {
+    outline: 2px solid var(--lf-p);
+    outline-offset: 3px;
+}
+
+.lf-collapsed .lf-mini-avatar-link {
+    display: flex;
+}
+
+.lf-mini-avatar {
+    display: flex;
     background: #f0f0f0;
     width: 32px;
     height: 32px;
@@ -270,15 +343,8 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    margin: 0 auto;
-    opacity: 0;
-    transition: opacity .3s;
+    margin: 0;
     color: #323130;
-}
-
-.lf-collapsed .lf-mini-avatar {
-    display: flex;
-    opacity: 1;
 }
 
 .lf-content-area {
@@ -337,6 +403,7 @@ body {
 
 .lf-collapsed .lf-locale-switch {
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
     position: absolute;
 }

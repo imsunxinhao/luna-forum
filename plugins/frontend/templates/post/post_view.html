@@ -1,18 +1,85 @@
 {% extends "layout.html" %}
+{% macro render_comment(comment, is_reply) %}
+<div class="lf-post lf-post-main lf-comment{% if is_reply %} lf-comment-reply{% endif %}" id="comment-{{ comment.id }}">
+    <div class="lf-post-body">
+        <div class="lf-avatar-wrapper">
+            <fluent-avatar data-color="neutral" class="lf-avatar"
+                {% if not comment.author or not comment.author.avatar %}initials="{{ comment.author.username[0]|upper if comment.author and comment.author.username else '?' }}"{% endif %}>
+                {% if comment.author and comment.author.avatar %}
+                <img src="{{ comment.author.avatar }}" alt="{{ comment.author.username }}">
+                {% endif %}
+            </fluent-avatar>
+        </div>
+        <div class="lf-post-content-wrapper">
+            <div class="lf-post-meta">
+                <span class="lf-username">
+                    {% if comment.author %}
+                    <a href="/user/{{ comment.author.uid }}">{{ comment.author.username }}</a>
+                    {% else %}
+                    {{ 'post.commentDeleted' | _ }}
+                    {% endif %}
+                </span>
+                {% if comment.replyToUsername %}
+                <span class="lf-comment-reply-to">{{ 'post.reply' | _ }} @{{ comment.replyToUsername }}</span>
+                {% endif %}
+                <div class="lf-meta-info">
+                    <span class="lf-time">{{ comment.createdAt | timeago }}</span>
+                    {% if comment.editedAt %}
+                    <span class="lf-edited">{{ 'post.edited' | _ }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if comment.deleted %}
+            <div class="lf-post-content lf-comment-deleted">{{ 'post.commentDeleted' | _ }}</div>
+            {% else %}
+            <div class="lf-post-content" data-lf-md data-lf-comment-body
+                data-lf-comment-raw="{{ comment.content }}">{{ comment.content }}</div>
+            {% endif %}
+            {% if user and not comment.deleted %}
+            <div class="lf-comment-actions">
+                <button type="button" class="lf-comment-action" data-lf-comment-reply="{{ comment.id }}"
+                    data-lf-comment-author="{{ comment.author.username if comment.author else '' }}">
+                    {{ 'post.reply' | _ }}
+                </button>
+                {% if comment.canEdit %}
+                <button type="button" class="lf-comment-action" data-lf-comment-edit="{{ comment.id }}">
+                    {{ 'post.edit' | _ }}
+                </button>
+                {% endif %}
+                {% if comment.canDelete %}
+                <button type="button" class="lf-comment-action lf-comment-action-danger"
+                    data-lf-comment-delete="{{ comment.id }}">
+                    {{ 'post.delete' | _ }}
+                </button>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endmacro %}
 {% block ext_script %}
-<meta name="post-id" content="{{ post_doc._id }}">
+<meta name="post-id" content="{{ post_id }}">
+<meta name="lf-confirm-delete-post" content="{{ 'post.confirmDelete' | _ }}">
+<meta name="lf-confirm-delete-comment" content="{{ 'post.confirmDeleteComment' | _ }}">
+<meta name="lf-save-edit" content="{{ 'post.saveEdit' | _ }}">
+<meta name="lf-cancel" content="{{ 'post.cancel' | _ }}">
+<meta name="lf-comment-empty" content="{{ 'post.commentEmpty' | _ }}">
+<meta name="lf-comment-failed" content="{{ 'post.commentFailed' | _ }}">
+<meta name="lf-save-failed" content="{{ 'post.saveFailed' | _ }}">
+<meta name="lf-delete-failed" content="{{ 'post.deleteFailed' | _ }}">
 <script type="module" src="/static/dist/post_view.js"></script>
 {% endblock %}
 {% block page_content %}
-<div class="lf-section lf-section-7-3">
+<div class="lf-section lf-section-7-3" data-lf-post-page>
     <div class="lf-post-parent">
-        <div class="lf-post lf-post-main">
+        <article class="lf-post lf-post-main">
             <div class="lf-post-layout">
                 <h1 class="lf-post-title">{{ post_doc.title }}</h1>
                 <div class="lf-post-body">
                     <div class="lf-avatar-wrapper">
-                        <fluent-avatar data-color="neutral" class="lf-avatar" {% if author and not author.avatar %}
-                            initials="{{ author.username[0]|upper }}" {% endif %}>
+                        <fluent-avatar data-color="neutral" class="lf-avatar"
+                            {% if not author or not author.avatar %}initials="{{ author.username[0]|upper if author and author.username else '?' }}"{% endif %}>
                             {% if author and author.avatar %}
                             <img src="{{ author.avatar }}" alt="{{ author.username }}">
                             {% endif %}
@@ -20,11 +87,16 @@
                     </div>
                     <div class="lf-post-content-wrapper">
                         <div class="lf-post-meta">
-                            <span class="lf-username">{{ author.username }}</span>
+                            <span class="lf-username">
+                                {% if author %}<a href="/user/{{ author.uid }}">{{ author.username }}</a>{% endif %}
+                            </span>
                             <div class="lf-meta-info">
                                 <span class="lf-time">{{ post_doc.createdAt | timeago }}</span>
                                 {% if post_doc.updatedAt and post_doc.updatedAt != post_doc.createdAt %}
                                 <span class="lf-edited">{{ 'post.edited' | _ }}</span>
+                                {% endif %}
+                                {% if tag %}
+                                <a class="lf-tag-chip" href="/?tagId={{ tag.id }}">{{ tag.name }}</a>
                                 {% endif %}
                             </div>
                         </div>
@@ -32,84 +104,114 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <h2 class="lf-post-title lf-comments-title">{{ 'post.comments' | _ }} ({{ comments|length }})</h2>
-        <div class="lf-post lf-post-main lf-comment">
+        </article>
+
+        <h2 class="lf-post-title lf-comments-title" id="comments">
+            {{ 'post.comments' | _ }} ({{ commentTotal }})
+        </h2>
+
+        {% if canComment %}
+        <div class="lf-post lf-post-main lf-comment lf-comment-composer">
             <div class="lf-post-body">
                 <div class="lf-avatar-wrapper">
-                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if user and not user.avatar %}
-                        initials="{{ user.username[0]|upper if user else '' }}" {% endif %}>
+                    <fluent-avatar data-color="neutral" class="lf-avatar"
+                        {% if user and not user.avatar %}initials="{{ user.username[0]|upper }}"{% endif %}>
                         {% if user and user.avatar %}
                         <img src="{{ user.avatar }}" alt="{{ user.username }}">
                         {% endif %}
                     </fluent-avatar>
                 </div>
                 <div class="lf-post-content-wrapper">
-                    {% if user %}
                     <div class="lf-comment-input" data-lf-comment-input>
                         <textarea class="lf-input-borderless lf-input-borderless-big" name="comment"
                             placeholder="{{ 'post.writeComment' | _ }}"></textarea>
                     </div>
+                    <input type="hidden" data-lf-comment-parent value="">
                     <div class="lf-comment-send-wrapper">
-                        <fluent-button appearance="primary" data-lf-comment-send>
-                            {{ 'post.sendComment' | _ }}
-                        </fluent-button>
-                    </div>
-                    {% else %}
-                    <textarea class="lf-input-borderless lf-input-borderless-big"
-                        placeholder="{{ 'post.loginToComment' | _ }}" disabled></textarea>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% for comment in comments %}
-        <div class="lf-post lf-post-main lf-comment" id="comment-{{ comment.id }}">
-            <div class="lf-post-body">
-                <div class="lf-avatar-wrapper">
-                    <fluent-avatar data-color="neutral" class="lf-avatar" {% if comment.author and not
-                        comment.author.avatar %} initials="{{ comment.author.username[0]|upper }}" {% endif %}>
-                        {% if comment.author and comment.author.avatar %}
-                        <img src="{{ comment.author.avatar }}" alt="{{ comment.author.username }}">
-                        {% endif %}
-                    </fluent-avatar>
-                </div>
-                <div class="lf-post-content-wrapper">
-                    <div class="lf-post-meta">
-                        <span class="lf-username">{{ comment.author.username }}</span>
-                        <div class="lf-meta-info">
-                            <span class="lf-time">{{ comment.createdAt | timeago }}</span>
-                            {% if comment.updatedAt and comment.updatedAt != comment.createdAt %}
-                            <span class="lf-edited">{{ 'post.edited' | _ }}</span>
-                            {% endif %}
+                        <div class="lf-comment-reply-bar" data-lf-reply-bar hidden>
+                            <span class="lf-comment-reply-info">
+                                <iconify-icon icon="fluent:arrow-reply-24-regular"></iconify-icon>
+                                {{ 'post.replyingTo' | _ }} <strong data-lf-reply-name></strong>
+                            </span>
+                            <button type="button" class="lf-link-btn" data-lf-reply-cancel>
+                                {{ 'post.cancelReply' | _ }}
+                            </button>
+                        </div>
+                        <div class="lf-comment-send-actions">
+                            <fluent-button appearance="accent" data-lf-comment-send>
+                                {{ 'post.sendComment' | _ }}
+                            </fluent-button>
                         </div>
                     </div>
-                    <div class="lf-post-content" data-lf-md>{{ comment.content }}</div>
                 </div>
             </div>
         </div>
+        {% else %}
+        <div class="lf-post lf-post-main lf-comment lf-comment-login">
+            <div class="lf-post-content">
+                {% if user %}
+                {{ 'post.noCommentPermission' | _ }}
+                {% else %}
+                {{ 'post.loginToComment' | _ }}
+                <fluent-link href="/login">{{ 'auth.login' | _ }}</fluent-link>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if comments|length == 0 %}
+        <div class="lf-no-comments">{{ 'post.noComments' | _ }}</div>
+        {% endif %}
+
+        {% for comment in comments %}
+        {{ render_comment(comment, false) }}
+        {% for reply in comment.replies %}
+        {{ render_comment(reply, true) }}
         {% endfor %}
+        {% endfor %}
+
+        {% if commentTotalPages > 1 %}
+        <nav class="lf-pagination">
+            {% if commentPage > 1 %}
+            <a class="lf-page-link" href="/post/{{ post_id }}?page={{ commentPage - 1 }}#comments">
+                <iconify-icon icon="fluent:chevron-left-24-regular"></iconify-icon>{{ 'home.prev' | _ }}
+            </a>
+            {% endif %}
+            <span class="lf-page-info">{{ commentPage }} / {{ commentTotalPages }}</span>
+            {% if commentPage < commentTotalPages %}
+            <a class="lf-page-link" href="/post/{{ post_id }}?page={{ commentPage + 1 }}#comments">
+                {{ 'home.next' | _ }}<iconify-icon icon="fluent:chevron-right-24-regular"></iconify-icon>
+            </a>
+            {% endif %}
+        </nav>
+        {% endif %}
     </div>
-    <div class="lf-post lf-post-sidebar">
+
+    <aside class="lf-post lf-post-sidebar">
         <fluent-menu>
             <fluent-menu-button slot="trigger" appearance="primary" tabindex="0" aria-haspopup="true"
                 aria-expanded="false">
                 {{ 'post.actions' | _ }}
             </fluent-menu-button>
             <fluent-menu-list focusgroup="menu" popover>
-                <fluent-menu-item tabindex="0" role="menuitem">
-                    {{ 'post.menuItem1' | _ }}
+                {% if canEditPost %}
+                <fluent-menu-item tabindex="0" role="menuitem" onclick="location.href='/post/{{ post_id }}/edit'">
+                    <iconify-icon icon="fluent:edit-24-regular"></iconify-icon>
+                    {{ 'post.editPost' | _ }}
                 </fluent-menu-item>
-                <fluent-menu-item tabindex="0" role="menuitem">
-                    {{ 'post.menuItem2' | _ }}
+                {% endif %}
+                {% if canDeletePost %}
+                <fluent-menu-item tabindex="0" role="menuitem" data-lf-post-delete>
+                    <iconify-icon icon="fluent:delete-24-regular"></iconify-icon>
+                    {{ 'post.deletePost' | _ }}
                 </fluent-menu-item>
-                <fluent-menu-item tabindex="0" role="menuitem">
-                    {{ 'post.menuItem3' | _ }}
-                </fluent-menu-item>
-                <fluent-menu-item tabindex="0" role="menuitem">
-                    {{ 'post.menuItem4' | _ }}
+                {% endif %}
+                <fluent-menu-item tabindex="0" role="menuitem" onclick="location.href='/'">
+                    <iconify-icon icon="fluent:home-24-regular"></iconify-icon>
+                    {{ 'post.backHome' | _ }}
                 </fluent-menu-item>
             </fluent-menu-list>
         </fluent-menu>
-    </div>
+    </aside>
 </div>
 {% endblock %}

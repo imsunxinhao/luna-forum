@@ -5,7 +5,6 @@ import './styles/sidebar.css';
 import './styles/lfstyle-v1.css';
 import './styles/toast.css';
 import './scripts/sidebar.js';
-import katex from 'katex';
 import { setTheme } from '@fluentui/web-components';
 import { webLightTheme, webDarkTheme } from '@fluentui/tokens';
 import { renderMarkdownNodes } from './markdown.js';

@@ -35,7 +35,7 @@ export function addTemplatePath(path: string): void {
     }
 }
 
-env.addFilter('_', (key: string, options?: Record<string, unknown>) => t(key));
+env.addFilter('_', (key: string, _options?: Record<string, unknown>) => t(key));
 
 env.addFilter('timeago', (date: unknown) => {
     if (!date) return '';
@@ -110,6 +110,9 @@ export async function renderPage(
         setLocale(detectLocale(request.headers, request.cookies));
         currentPath = request.url ?? '/';
     }
+    const canCreatePost = userId > 0
+        ? await privManager.hasPriv(userId, 'post:create')
+        : false;
     const merged: Record<string, unknown> = {
         ...data,
         site,
@@ -117,6 +120,7 @@ export async function renderPage(
         lang: getLocale(),
         availableLocales: getAvailableLocales(),
         currentPath,
+        canCreatePost,
         bundlePath: '/static/dist/bundle.js',
         stylePath: '/static/dist/bundle.css',
         hasPriv: (permId: string) => privManager.hasPriv(userId, permId)

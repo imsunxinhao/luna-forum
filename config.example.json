@@ -35,13 +35,6 @@
             "deps": [
                 "post"
             ]
-        },
-        {
-            "name": "frontend",
-            "main": "./plugins/frontend/index.ts",
-            "deps": [
-                "post"
-            ]
         }
     ]
 }

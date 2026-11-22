@@ -12,17 +12,16 @@ export interface AppConfig {
     site?: {
         name: string
         description: string
-        /** 对外可访问的站点地址（如 https://forum.example.com），用于邮件里的链接；留空则用请求的 Host */
         url?: string
     }
     jwt_secret: string
     session_secret?: string
-    smtp?: {
-        host?: string
-        port?: number
-        user?: string
-        pass?: string
-        from?: string
+    auth?: {
+        salt_rounds?: number
+        cookie_name?: string
+        token_expires?: number
+        regtoken_ttl?: number
+        resend_ttl?: number
     }
     plugins: PluginConfig[]
 }
@@ -115,6 +114,16 @@ export function getPlugins(): PluginConfig[] {
     return appConfig.plugins || []
 }
 
+export function getAuthConfig() {
+    return {
+        saltRounds: appConfig?.auth?.salt_rounds ?? 10,
+        cookieName: appConfig?.auth?.cookie_name ?? 'client_key',
+        tokenExpires: appConfig?.auth?.token_expires ?? 7 * 24 * 60 * 60,
+        regTokenTTL: appConfig?.auth?.regtoken_ttl ?? 86400,
+        resendTTL: appConfig?.auth?.resend_ttl ?? 3600
+    }
+}
+
 export function getDBConfig(): DBConfig {
     return dbConfig
 }
@@ -158,18 +167,6 @@ export async function setSiteConfig(site: Partial<SiteConfig>): Promise<void> {
 export function getSiteOrigin(): string {
     const origin = getDBConfigValue<string>('site.url', appConfig?.site?.url ?? '')
     return origin.replace(/\/+$/, '')
-}
-
-export function getSMTPConfig(): SMTPConfig | null {
-    const host = getDBConfigValue<string>('smtp.host', appConfig?.smtp?.host ?? '')
-    if (!host) return null
-    return {
-        host,
-        port: getDBConfigValue<number>('smtp.port', appConfig?.smtp?.port ?? 587),
-        user: getDBConfigValue<string>('smtp.user', appConfig?.smtp?.user ?? ''),
-        pass: getDBConfigValue<string>('smtp.pass', appConfig?.smtp?.pass ?? ''),
-        from: getDBConfigValue<string>('smtp.from', appConfig?.smtp?.from ?? '')
-    }
 }
 
 export async function setSMTPConfig(smtp: Partial<SMTPConfig>): Promise<void> {
